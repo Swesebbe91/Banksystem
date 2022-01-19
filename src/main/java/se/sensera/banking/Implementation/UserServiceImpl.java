@@ -6,28 +6,37 @@ import se.sensera.banking.UsersRepository;
 import se.sensera.banking.exceptions.UseException;
 
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public class UserServiceImpl implements UserService {
 
-
-    private UsersRepository usersRepository;
-    private UserImpl test;
+    final UsersRepository usersRepository;
 
     public UserServiceImpl(UsersRepository usersRepository) {
         this.usersRepository = usersRepository;
-
     }
 
     @Override
     public User createUser(String name, String personalIdentificationNumber) throws UseException {
-        UserImpl newPerson = new UserImpl(name, personalIdentificationNumber);
+        boolean active = true;
+        String id = String.valueOf(generateID());
+        //If hämta report jämföra
+        // OM inte gör detta under
+        UserImpl newUser = new UserImpl(id, name, personalIdentificationNumber, active);
+        return usersRepository.save(newUser);
 
-         // här är implementationen med funktionen
-        // felhantera när den ska kasta ett undantag;
+        // Måste hantera ID med random
+        // Måste sätta bool
+        // try/catch
+        // IF: Dubbelkolla att namn och pid inte redan finns i repo/list
+        // Om det inte inte finns, go ahead
+        // Annars, kasta ett undantag UseException
+    }
 
-        return newPerson;
+    public UUID generateID() {
+        return UUID.fromString(UUID.randomUUID().toString());
     }
 
     @Override
@@ -49,4 +58,5 @@ public class UserServiceImpl implements UserService {
     public Stream<User> find(String searchString, Integer pageNumber, Integer pageSize, SortOrder sortOrder) {
         return null;
     }
+
 }
