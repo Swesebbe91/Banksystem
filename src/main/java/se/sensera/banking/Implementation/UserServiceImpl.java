@@ -3,7 +3,9 @@ package se.sensera.banking.Implementation;
 import se.sensera.banking.User;
 import se.sensera.banking.UserService;
 import se.sensera.banking.UsersRepository;
+import se.sensera.banking.exceptions.Activity;
 import se.sensera.banking.exceptions.UseException;
+import se.sensera.banking.exceptions.UseExceptionType;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -20,24 +22,29 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User createUser(String name, String personalIdentificationNumber) throws UseException {
-        boolean active = true;
-        String id = String.valueOf(generateID());
-        //If hämta report jämföra
-        // OM inte gör detta under
-        UserImpl newUser = new UserImpl(id, name, personalIdentificationNumber, active);
-        return usersRepository.save(newUser);
+        try {
+            if (!checkPID(personalIdentificationNumber)) {
+                boolean active = true;
+                String id = String.valueOf(generateID());
+                UserImpl newUser = new UserImpl(id, name, personalIdentificationNumber, active);
+                return usersRepository.save(newUser);
+            }
+            throw new UseException(Activity.CREATE_USER, UseExceptionType.USER_PERSONAL_ID_NOT_UNIQUE,"Hejsan");
+        } catch (UseException e) {
+            throw e;
+        }
+    }
 
-        // Måste hantera ID med random
-        // Måste sätta bool
-        // try/catch
-        // IF: Dubbelkolla att namn och pid inte redan finns i repo/list
-        // Om det inte inte finns, go ahead
-        // Annars, kasta ett undantag UseException
+    public boolean checkPID(String pid) {
+        boolean bool = usersRepository.all()
+                .anyMatch(x -> x.getPersonalIdentificationNumber().equals(pid));
+        return bool;
     }
 
     public UUID generateID() {
         return UUID.fromString(UUID.randomUUID().toString());
     }
+
 
     @Override
     public User changeUser(String userId, Consumer<ChangeUser> changeUser) throws UseException {
@@ -58,5 +65,4 @@ public class UserServiceImpl implements UserService {
     public Stream<User> find(String searchString, Integer pageNumber, Integer pageSize, SortOrder sortOrder) {
         return null;
     }
-
 }
