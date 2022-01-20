@@ -1,5 +1,6 @@
 package se.sensera.banking.Implementation;
 
+import se.sensera.banking.AccountService;
 import se.sensera.banking.User;
 import se.sensera.banking.UserService;
 import se.sensera.banking.UsersRepository;
@@ -48,7 +49,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User changeUser(String userId, Consumer<ChangeUser> changeUser) throws UseException {
-        return null;
+        User updatedUser = usersRepository.getEntityById(userId).get();
+        //changeUser.updatedUser.setName("Svenne");
+        System.out.println(changeUser);
+        Consumer<ChangeUser> changeUserConsumer = changeUser1 -> changeUser1.setName("Kalle");
+        System.out.println(changeUserConsumer);
+
+        return usersRepository.save(updatedUser);
     }
 
     @Override
