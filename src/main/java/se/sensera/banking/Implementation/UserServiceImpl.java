@@ -44,28 +44,26 @@ public class UserServiceImpl implements UserService {
         return UUID.fromString(UUID.randomUUID().toString());
     }
 
-
     @Override
     public User changeUser(String userId, Consumer<ChangeUser> changeUser) throws UseException {
-        User updatedUser = usersRepository.getEntityById(userId).get();
 
-        ChangeUser test = new ChangeUser() {
-            @Override
-            public void setName(String name) {
-                updatedUser.setName(name);
-            }
+            User updatedUser = usersRepository.getEntityById(userId).get();
+            ChangeUser test = new ChangeUser() {
+                @Override
+                public void setName(String name) {
+                    updatedUser.setName(name);
+                }
+                @Override
+                public void setPersonalIdentificationNumber(String personalIdentificationNumber) throws UseException {
+                    updatedUser.setPersonalIdentificationNumber(personalIdentificationNumber);
+                }
+            };
+            //System.out.println(test.toString());
+            changeUser.accept(test);
+            //test.setName(String.valueOf(changeUser));
+            return usersRepository.save(updatedUser);
+        }
 
-            @Override
-            public void setPersonalIdentificationNumber(String personalIdentificationNumber) throws UseException {
-                updatedUser.setPersonalIdentificationNumber(personalIdentificationNumber);
-            }
-        };
-        //System.out.println(test.toString());
-        changeUser.accept(test);
-        //test.setName(String.valueOf(changeUser));
-
-        return usersRepository.save(updatedUser);
-    }
 
     @Override
     public User inactivateUser(String userId) throws UseException {
@@ -74,11 +72,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Optional<User> getUser(String userId) {
-        return Optional.empty();
+        Optional<User> updatedUser = usersRepository.getEntityById(userId);
+        return Optional.of(updatedUser.get());
     }
 
     @Override
     public Stream<User> find(String searchString, Integer pageNumber, Integer pageSize, SortOrder sortOrder) {
         return null;
     }
+
+
 }
