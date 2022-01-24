@@ -5,6 +5,7 @@ import se.sensera.banking.exceptions.Activity;
 import se.sensera.banking.exceptions.UseException;
 import se.sensera.banking.exceptions.UseExceptionType;
 
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.UUID;
@@ -46,9 +47,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User changeUser(String userId, Consumer<ChangeUser> changeUser) throws UseException {
+        User updatedUser;
+        if(usersRepository.getEntityById(userId).isEmpty()) //Tittar först om det vi hämtar är tomt.
+            throw new UseException(Activity.UPDATE_USER, UseExceptionType.NOT_FOUND, "empty");
+        else {
+        updatedUser = usersRepository.getEntityById(userId).get(); //OM där finns något, sätt värdet!
+        }
 
-            User updatedUser = usersRepository.getEntityById(userId).get();
-            ChangeUser test = new ChangeUser() {
+             ChangeUser test = new ChangeUser() {
                 @Override
                 public void setName(String name) {
                     updatedUser.setName(name);
@@ -62,9 +68,9 @@ public class UserServiceImpl implements UserService {
             changeUser.accept(test);
             //test.setName(String.valueOf(changeUser));
             return usersRepository.save(updatedUser);
-        }
 
 
+}
     @Override
     public User inactivateUser(String userId) throws UseException {
         return null;
@@ -72,8 +78,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Optional<User> getUser(String userId) {
-        Optional<User> updatedUser = usersRepository.getEntityById(userId);
-        return Optional.of(updatedUser.get());
+        return usersRepository.getEntityById(userId); //Returnerar ett värde på true eller false
+
+
+
     }
 
     @Override
