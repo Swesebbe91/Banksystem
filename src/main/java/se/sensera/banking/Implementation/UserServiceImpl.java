@@ -68,12 +68,12 @@ public class UserServiceImpl implements UserService {
             changeUser.accept(test);
             //test.setName(String.valueOf(changeUser));
             return usersRepository.save(updatedUser);
-
-
 }
     @Override
     public User inactivateUser(String userId) throws UseException {
-        return null;
+        User inactiveUser = usersRepository.getEntityById(userId).get();
+        inactiveUser.setActive(false);
+        return usersRepository.save(inactiveUser);
     }
 
     @Override
