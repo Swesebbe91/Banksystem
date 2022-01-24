@@ -48,30 +48,40 @@ public class UserServiceImpl implements UserService {
     @Override
     public User changeUser(String userId, Consumer<ChangeUser> changeUser) throws UseException {
         User updatedUser;
-        if(usersRepository.getEntityById(userId).isEmpty()) //Tittar först om det vi hämtar är tomt.
+        if (usersRepository.getEntityById(userId).isEmpty()) //Tittar först om det vi hämtar är tomt.
             throw new UseException(Activity.UPDATE_USER, UseExceptionType.NOT_FOUND, "empty");
         else {
-        updatedUser = usersRepository.getEntityById(userId).get(); //OM där finns något, sätt värdet!
+            updatedUser = usersRepository.getEntityById(userId).get(); //OM där finns något, sätt värdet!
         }
-
              ChangeUser test = new ChangeUser() {
                 @Override
                 public void setName(String name) {
                     updatedUser.setName(name);
+                    usersRepository.save(updatedUser);
                 }
                 @Override
                 public void setPersonalIdentificationNumber(String personalIdentificationNumber) throws UseException {
-                    updatedUser.setPersonalIdentificationNumber(personalIdentificationNumber);
+
+                    if(usersRepository.all().anyMatch(x -> x.getPersonalIdentificationNumber().equals(personalIdentificationNumber))){
+                        throw new UseException(Activity.UPDATE_USER, UseExceptionType.USER_PERSONAL_ID_NOT_UNIQUE, "Not unique personalnr");
+                    }
+                    else{
+                        updatedUser.setPersonalIdentificationNumber(personalIdentificationNumber);
+                        usersRepository.save(updatedUser);
+                    }
                 }
             };
-            //System.out.println(test.toString());
-            changeUser.accept(test);
-            //test.setName(String.valueOf(changeUser));
-            return usersRepository.save(updatedUser);
-}
+        changeUser.accept(test);
+        return updatedUser;
+    }
+
     @Override
     public User inactivateUser(String userId) throws UseException {
-        User inactiveUser = usersRepository.getEntityById(userId).get();
+        User inactiveUser;
+        if (usersRepository.getEntityById(userId).isEmpty()) {
+            throw new UseException(Activity.UPDATE_USER, UseExceptionType.NOT_FOUND, "Couldn't find userID");
+        }
+        inactiveUser = usersRepository.getEntityById(userId).get();
         inactiveUser.setActive(false);
         return usersRepository.save(inactiveUser);
     }
@@ -79,15 +89,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public Optional<User> getUser(String userId) {
         return usersRepository.getEntityById(userId); //Returnerar ett värde på true eller false
-
-
-
     }
 
     @Override
     public Stream<User> find(String searchString, Integer pageNumber, Integer pageSize, SortOrder sortOrder) {
         return null;
     }
-
-
 }
