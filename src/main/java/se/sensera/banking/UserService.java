@@ -18,6 +18,7 @@ public interface UserService {
 
     Stream<User> find(String searchString, Integer pageNumber, Integer pageSize, SortOrder sortOrder);
 
+
     interface ChangeUser {
         void setName(String name);
         void setPersonalIdentificationNumber(String personalIdentificationNumber) throws UseException;

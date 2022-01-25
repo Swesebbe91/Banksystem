@@ -5,11 +5,9 @@ import se.sensera.banking.exceptions.Activity;
 import se.sensera.banking.exceptions.UseException;
 import se.sensera.banking.exceptions.UseExceptionType;
 
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.Scanner;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class UserServiceImpl implements UserService {
@@ -22,27 +20,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User createUser(String name, String personalIdentificationNumber) throws UseException {
-        try {
-            if (!checkPID(personalIdentificationNumber)) {
-                boolean active = true;
-                String id = String.valueOf(generateID());
-                UserImpl newUser = new UserImpl(id, name, personalIdentificationNumber, active);
-                return usersRepository.save(newUser);
-            }
-            throw new UseException(Activity.CREATE_USER, UseExceptionType.USER_PERSONAL_ID_NOT_UNIQUE, "Hejsan");
-        } catch (UseException e) {
-            throw e;
-        }
-    }
-
-    public boolean checkPID(String pid) {
-        boolean bool = usersRepository.all()
-                .anyMatch(x -> x.getPersonalIdentificationNumber().equals(pid));
-        return bool;
-    }
-
-    public UUID generateID() {
-        return UUID.fromString(UUID.randomUUID().toString());
+        if (usersRepository.all()
+                .anyMatch(user -> user.getPersonalIdentificationNumber().equals(personalIdentificationNumber)))
+            throw new UseException(Activity.CREATE_USER, UseExceptionType.USER_PERSONAL_ID_NOT_UNIQUE, "Cannot create account");
+        UserImpl newUser = new UserImpl(UUID.randomUUID().toString(), name, personalIdentificationNumber, true);
+        return usersRepository.save(newUser);
     }
 
     @Override
@@ -53,24 +35,24 @@ public class UserServiceImpl implements UserService {
         else {
             updatedUser = usersRepository.getEntityById(userId).get(); //OM där finns något, sätt värdet!
         }
-             ChangeUser test = new ChangeUser() {
-                @Override
-                public void setName(String name) {
-                    updatedUser.setName(name);
+        ChangeUser test = new ChangeUser() {
+            @Override
+            public void setName(String name) {
+                updatedUser.setName(name);
+                usersRepository.save(updatedUser);
+            }
+
+            @Override
+            public void setPersonalIdentificationNumber(String personalIdentificationNumber) throws UseException {
+
+                if (usersRepository.all().anyMatch(x -> x.getPersonalIdentificationNumber().equals(personalIdentificationNumber))) {
+                    throw new UseException(Activity.UPDATE_USER, UseExceptionType.USER_PERSONAL_ID_NOT_UNIQUE, "Not unique personalnr");
+                } else {
+                    updatedUser.setPersonalIdentificationNumber(personalIdentificationNumber);
                     usersRepository.save(updatedUser);
                 }
-                @Override
-                public void setPersonalIdentificationNumber(String personalIdentificationNumber) throws UseException {
-
-                    if(usersRepository.all().anyMatch(x -> x.getPersonalIdentificationNumber().equals(personalIdentificationNumber))){
-                        throw new UseException(Activity.UPDATE_USER, UseExceptionType.USER_PERSONAL_ID_NOT_UNIQUE, "Not unique personalnr");
-                    }
-                    else{
-                        updatedUser.setPersonalIdentificationNumber(personalIdentificationNumber);
-                        usersRepository.save(updatedUser);
-                    }
-                }
-            };
+            }
+        };
         changeUser.accept(test);
         return updatedUser;
     }
@@ -93,6 +75,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Stream<User> find(String searchString, Integer pageNumber, Integer pageSize, SortOrder sortOrder) {
-        return null;
+        List<User> listOfUsers = usersRepository.all()
+                .filter(x -> x.getName().toLowerCase().contains(searchString))
+                .collect(Collectors.toList());
+        return listOfUsers.stream();
     }
 }
