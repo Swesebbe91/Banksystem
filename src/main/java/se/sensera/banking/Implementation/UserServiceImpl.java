@@ -75,9 +75,24 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Stream<User> find(String searchString, Integer pageNumber, Integer pageSize, SortOrder sortOrder) {
-        List<User> listOfUsers = usersRepository.all()
+        List<User> listOfUsers;
+
+        if (searchString.equals("")){
+            if (SortOrder.Name.equals(sortOrder)){
+                listOfUsers = usersRepository.all()
+                        .sorted(Comparator.comparing(User::getName))
+                        .collect(Collectors.toList());
+            } else {
+                listOfUsers = usersRepository.all()
+                        .sorted(Comparator.comparing(User::getPersonalIdentificationNumber))
+                        .collect(Collectors.toList());
+            }
+        }
+        else {
+            listOfUsers = usersRepository.all()
                 .filter(x -> x.getName().toLowerCase().contains(searchString))
                 .collect(Collectors.toList());
+        }
         return listOfUsers.stream();
     }
 }
