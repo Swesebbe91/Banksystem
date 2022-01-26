@@ -40,10 +40,13 @@ public class AccountServiceImpl implements AccountService {
             @Override
             public void setName(String name) throws UseException {
                 if (accountUser.getId().isEmpty()) {
-                } else if(name.equals(accountUser.getName())) {
+                } else if (name.equals(accountUser.getName())) {
                     updatedUser.setName(name);
                     usersRepository.save(updatedUser);
                 } else {
+                    if (accountsRepository.all().anyMatch(x -> x.getName().equals(name))) {
+                        throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.ACCOUNT_NAME_NOT_UNIQUE, "Account name not unique");
+                    }
                     accountUser.setName(name);
                     accountsRepository.save(accountUser);
                 }
