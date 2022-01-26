@@ -44,7 +44,6 @@ public class UserServiceImpl implements UserService {
 
             @Override
             public void setPersonalIdentificationNumber(String personalIdentificationNumber) throws UseException {
-
                 if (usersRepository.all().anyMatch(x -> x.getPersonalIdentificationNumber().equals(personalIdentificationNumber))) {
                     throw new UseException(Activity.UPDATE_USER, UseExceptionType.USER_PERSONAL_ID_NOT_UNIQUE, "Not unique personalnr");
                 } else {
@@ -76,23 +75,32 @@ public class UserServiceImpl implements UserService {
     @Override
     public Stream<User> find(String searchString, Integer pageNumber, Integer pageSize, SortOrder sortOrder) {
         List<User> listOfUsers;
-
-        if (searchString.equals("")){
-            if (SortOrder.Name.equals(sortOrder)){
-                listOfUsers = usersRepository.all()
-                        .sorted(Comparator.comparing(User::getName))
-                        .collect(Collectors.toList());
+        if (pageNumber == null || pageNumber <= 1) {
+            if (searchString.equals("")) {
+                if (SortOrder.Name.equals(sortOrder)) {
+                    listOfUsers = usersRepository.all()
+                            .sorted(Comparator.comparing(User::getName))
+                            .collect(Collectors.toList());
+                } else if (SortOrder.PersonalId.equals(sortOrder)) {
+                    listOfUsers = usersRepository.all()
+                            .sorted(Comparator.comparing(User::getPersonalIdentificationNumber))
+                            .collect(Collectors.toList());
+                } else {
+                    listOfUsers = usersRepository.all()
+                            .filter(User::isActive)
+                            .collect(Collectors.toList());
+                }
             } else {
                 listOfUsers = usersRepository.all()
-                        .sorted(Comparator.comparing(User::getPersonalIdentificationNumber))
+                        .filter(x -> x.getName().toLowerCase().contains(searchString))
                         .collect(Collectors.toList());
             }
-        }
-        else {
-            listOfUsers = usersRepository.all()
-                .filter(x -> x.getName().toLowerCase().contains(searchString))
-                .collect(Collectors.toList());
+        } else {
+            listOfUsers = Collections.emptyList();
+            return listOfUsers.stream();
         }
         return listOfUsers.stream();
     }
 }
+
+
