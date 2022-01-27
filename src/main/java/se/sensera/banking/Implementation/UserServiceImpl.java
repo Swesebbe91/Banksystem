@@ -58,18 +58,28 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User inactivateUser(String userId) throws UseException {
-        User inactiveUser;
+        return getUser(userId)
+                .map(user -> { user.setActive(false); return user;})
+                .map(usersRepository::save)
+                .orElseThrow(() -> new UseException(Activity.UPDATE_USER, UseExceptionType.NOT_FOUND, "Couldn't find userID"));
+
+        /*User user = usersRepository.getEntityById(userId)
+                .orElseThrow(() -> new UseException(Activity.UPDATE_USER, UseExceptionType.NOT_FOUND, "Couldn't find userID"));
+        user.setActive(false);
+        return usersRepository.save(user);*/
+
+        /* User inactiveUser;
         if (usersRepository.getEntityById(userId).isEmpty()) {
             throw new UseException(Activity.UPDATE_USER, UseExceptionType.NOT_FOUND, "Couldn't find userID");
         }
         inactiveUser = usersRepository.getEntityById(userId).get();
         inactiveUser.setActive(false);
-        return usersRepository.save(inactiveUser);
+        return usersRepository.save(inactiveUser); */
     }
 
     @Override
     public Optional<User> getUser(String userId) {
-        return usersRepository.getEntityById(userId); //Returnerar ett värde på true eller false
+        return usersRepository.getEntityById(userId);
     }
 
     @Override

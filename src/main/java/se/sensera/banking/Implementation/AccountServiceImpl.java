@@ -5,9 +5,12 @@ import se.sensera.banking.exceptions.Activity;
 import se.sensera.banking.exceptions.UseException;
 import se.sensera.banking.exceptions.UseExceptionType;
 
-import java.util.Optional;
+
 import java.util.function.Consumer;
+
 import java.util.stream.Stream;
+
+
 
 public class AccountServiceImpl implements AccountService {
 
@@ -39,10 +42,12 @@ public class AccountServiceImpl implements AccountService {
         changeAccountConsumer.accept(new ChangeAccount() {
             @Override
             public void setName(String name) throws UseException {
-                if (accountUser.getId().isEmpty()) {
+                // En användare får inte byta namn ifall hen inte är ägare till kontot.
+
+                if (accountUser.getId().isEmpty()) { // Det finns en användare.
                 } else if (name.equals(accountUser.getName())) {
                     updatedUser.setName(name);
-                    usersRepository.save(updatedUser);
+                    usersRepository.save(updatedUser); //Sparar användaren i user
                 } else {
                     if (accountsRepository.all().anyMatch(x -> x.getName().equals(name))) {
                         throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.ACCOUNT_NAME_NOT_UNIQUE, "Account name not unique");
@@ -50,6 +55,11 @@ public class AccountServiceImpl implements AccountService {
                     accountUser.setName(name);
                     accountsRepository.save(accountUser);
                 }
+                /*if (accountsRepository.all().noneMatch(x -> x.getOwner().equals(x.getUsers()))) {
+                    throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_FOUND, "BAJS");
+                }*/
+
+                accountUser.setName(name);
             }
         });
         return accountUser;
@@ -67,7 +77,15 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Account inactivateAccount(String userId, String accountId) throws UseException {
-        return null;
+        Account account;
+        if(accountsRepository.getEntityById(accountId).isEmpty()) {
+            throw new UseException(Activity.INACTIVATE_ACCOUNT, UseExceptionType.NOT_FOUND, "account not found");
+        }else {
+             account = accountsRepository.getEntityById(accountId).get();
+             account.setActive(false);
+             accountsRepository.save(account);
+        }
+            return account;
     }
 
     @Override
