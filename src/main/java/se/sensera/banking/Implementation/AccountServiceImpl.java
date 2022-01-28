@@ -30,7 +30,7 @@ public class AccountServiceImpl implements AccountService {
             throw new UseException(Activity.CREATE_ACCOUNT, UseExceptionType.ACCOUNT_NAME_NOT_UNIQUE, "Not unique name");
         }
         User user = usersRepository.getEntityById(userId).get();
-        AccountImpl account = new AccountImpl(user, accountName);
+        AccountImpl account = new AccountImpl(user, accountName, userId);
         return accountsRepository.save(account);
     }
 
@@ -42,27 +42,22 @@ public class AccountServiceImpl implements AccountService {
         changeAccountConsumer.accept(new ChangeAccount() {
             @Override
             public void setName(String name) throws UseException {
-                // En användare får inte byta namn ifall hen inte är ägare till kontot.
-
-                if (accountUser.getId().isEmpty()) { // Det finns en användare.
-                } else if (name.equals(accountUser.getName())) {
-                    updatedUser.setName(name);
-                    usersRepository.save(updatedUser); //Sparar användaren i user
-                } else {
+                // TODO: En användare får inte byta namn ifall hen inte är ägare till kontot.
+                // TODO: En användare får inte byta namn för att kontot är inaktivt.
+                if (accountUser.getId().isEmpty()) { // Om det inte finns ett kontoid.
+                } else if (name.equals(accountUser.getName())) { // Om namnet är samma som namnet på kontot
+                    updatedUser.setName(name); // Uppdatera namnet på användaren.
+                    usersRepository.save(updatedUser); //Sparar användarens nya namn
+                } else { // Om namnet som skickats inte finns alls i kontorepot kastas ett undantag
                     if (accountsRepository.all().anyMatch(x -> x.getName().equals(name))) {
                         throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.ACCOUNT_NAME_NOT_UNIQUE, "Account name not unique");
-                    }
+                    } // I alla andra fall ska användaren kunna ändra sitt namn
                     accountUser.setName(name);
-                    accountsRepository.save(accountUser);
+                    accountsRepository.save(accountUser); // spara nya kontonamnet.
                 }
-                /*if (accountsRepository.all().noneMatch(x -> x.getOwner().equals(x.getUsers()))) {
-                    throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_FOUND, "BAJS");
-                }*/
-
-                accountUser.setName(name);
             }
         });
-        return accountUser;
+        return accountUser; // Returnera kontots ägare.
     }
 
     @Override
@@ -78,18 +73,25 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public Account inactivateAccount(String userId, String accountId) throws UseException {
         Account account;
-        if(accountsRepository.getEntityById(accountId).isEmpty()) {
-            throw new UseException(Activity.INACTIVATE_ACCOUNT, UseExceptionType.NOT_FOUND, "account not found");
-        }else {
+        User user;
+        if (!accountId.equals(userId)) { // Såhär kollar vi om ägarskap över ett konto
+            throw new UseException(Activity.INACTIVATE_ACCOUNT, UseExceptionType.NOT_OWNER, "Account not found");
+        }
+        else if (accountsRepository.getEntityById(accountId).isEmpty()) {
+            throw new UseException(Activity.INACTIVATE_ACCOUNT, UseExceptionType.NOT_FOUND, "Account not found");
+        }
+        else if (usersRepository.getEntityById(userId).isEmpty()) {
+            throw new UseException(Activity.INACTIVATE_ACCOUNT, UseExceptionType.USER_NOT_FOUND, "User not found");
+        } else {
              account = accountsRepository.getEntityById(accountId).get();
              account.setActive(false);
              accountsRepository.save(account);
         }
-            return account;
+        return account;
     }
 
     @Override
     public Stream<Account> findAccounts(String searchValue, String userId, Integer pageNumber, Integer pageSize, SortOrder sortOrder) throws UseException {
-        return null;
+        return accountsRepository.all();
     }
 }

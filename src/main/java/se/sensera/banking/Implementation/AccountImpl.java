@@ -8,15 +8,21 @@ import java.util.stream.Stream;
 public class AccountImpl implements Account {
     private User owner;
     private String name;
+    private String id;
 
-    public AccountImpl(User owner, String name){
+
+    public AccountImpl() {
+    }
+
+    public AccountImpl(User owner, String name, String id){
         this.owner = owner;
          this.name = name;
+         this.id = id;
     }
 
     @Override
     public String getId() {
-        return null;
+        return this.id;
     }
 
     @Override
