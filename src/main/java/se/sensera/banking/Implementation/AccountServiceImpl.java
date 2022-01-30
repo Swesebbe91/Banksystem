@@ -60,12 +60,21 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Account addUserToAccount(String userId, String accountId, String userIdToBeAssigned) throws UseException {
-        //TODO: En användare ska kunna lägga till en användare till ett konto
-        Account accountUser = accountsRepository.getEntityById(accountId).get(); //HITTAT KONTOT
-        User newUser = usersRepository.getEntityById(userIdToBeAssigned).get();
+        Account accountUser = accountsRepository.getEntityById(accountId).get(); //Nuvarande account
+        User currentUser = usersRepository.getEntityById(userId).get(); //Nuvarande user
+        User newUser = usersRepository.getEntityById(userIdToBeAssigned).get(); //ny user
+
+        if (!accountUser.getOwner().getId().equals(currentUser.getId())) {//Test rad 94. Ska inte kunna lägga till användare för att man inte är ägare
+            throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_OWNER, "Not owner");
+        }
+        if (accountsRepository.getEntityById(accountId).get().getOwner().getId().equals(userIdToBeAssigned)){//Test rad 80, kan inte lägga till ägare som användare
+            throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.CANNOT_ADD_OWNER_AS_USER, "Cannot add owner as user");
+        }
+        //HITTAT KONTOT
         usersRepository.save(newUser);
+        accountsRepository.save(accountUser);
         accountUser.addUser(newUser);
-        return accountsRepository.save(accountUser);
+        return accountUser;
     }
 
     @Override

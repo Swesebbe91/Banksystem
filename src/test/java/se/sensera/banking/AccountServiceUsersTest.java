@@ -67,7 +67,7 @@ public class AccountServiceUsersTest {
     }
 
     @Test
-    void add_user_to_account_success() throws UseException {
+    void add_user_to_account_success() throws UseException { // klar
         // When
         Account changedAccount = accountService.addUserToAccount(userId, account.getId(), otherUserId);
 
@@ -77,7 +77,7 @@ public class AccountServiceUsersTest {
     }
 
     @Test
-    void add_user_to_account_failed_because_user_owner() {
+    void add_user_to_account_failed_because_user_owner() { // klar
         // When
         UseException userException = assertThrows(UseException.class, () -> {
             accountService.addUserToAccount(userId, account.getId(), userId);
