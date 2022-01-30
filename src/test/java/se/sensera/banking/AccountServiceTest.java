@@ -69,7 +69,7 @@ public class AccountServiceTest {
     }
 
     @Test
-    void create_account_success() throws UseException {
+    void create_account_success() throws UseException { // KLar
         // Given
         when(usersRepository.getEntityById(eq(userId))).thenReturn(Optional.of(user));
 
@@ -87,7 +87,7 @@ public class AccountServiceTest {
     }
 
     @Test
-    void create_account_failed_because_user_not_found() {
+    void create_account_failed_because_user_not_found() { // Klar
         // when
         UseException userException = assertThrows(UseException.class, () -> {
             accountService.createAccount(UUID.randomUUID().toString(), accountName);
@@ -100,7 +100,7 @@ public class AccountServiceTest {
     }
 
     @Test
-    void create_account_failed_because_duplicate_name_for_owner_user() {
+    void create_account_failed_because_duplicate_name_for_owner_user() { // KLar
         // Given
         Account otherAccount = mock(Account.class);
         when(otherAccount.getOwner()).thenReturn(user);
@@ -120,7 +120,7 @@ public class AccountServiceTest {
     }
 
     @Test
-    void change_account_name_success() throws UseException {
+    void change_account_name_success() throws UseException { //klar
         // Given
         String otherAccountName = "other";
         when(usersRepository.getEntityById(eq(userId))).thenReturn(Optional.of(user));
@@ -146,7 +146,7 @@ public class AccountServiceTest {
     }
 
     @Test
-    void change_account_name_to_same_name_success() throws UseException {
+    void change_account_name_to_same_name_success() throws UseException { //Klar
         // Given
         when(usersRepository.getEntityById(eq(userId))).thenReturn(Optional.of(user));
         when(accountsRepository.getEntityById(eq(accountId))).thenReturn(Optional.of(account));
@@ -166,7 +166,7 @@ public class AccountServiceTest {
     }
 
     @Test
-    void change_account_name_failed_because_duplicate_name() throws UseException {
+    void change_account_name_failed_because_duplicate_name() throws UseException { // klar
         // Given
         String otherAccountName = "other";
         Account otherAccount = mock(Account.class);
@@ -193,7 +193,7 @@ public class AccountServiceTest {
     }
 
     @Test
-    void change_account_name_failed_because_not_owner() {
+    void change_account_name_failed_because_not_owner() { // klar
         // Given
         String otherAccountName = "other";
         Account otherAccount = mock(Account.class);
@@ -220,7 +220,7 @@ public class AccountServiceTest {
     }
 
     @Test
-    void change_account_name_failed_because_account_inactive() {
+    void change_account_name_failed_because_account_inactive() { // klar
         // Given
         String otherAccountName = "other";
         when(accountsRepository.all()).thenReturn(Stream.of(account));

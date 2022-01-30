@@ -6,18 +6,20 @@ import se.sensera.banking.User;
 import java.util.stream.Stream;
 
 public class AccountImpl implements Account {
+    private String id;
     private User owner;
     private String name;
-    private String id;
+    private boolean active;
 
 
     public AccountImpl() {
     }
 
-    public AccountImpl(User owner, String name, String id){
+    public AccountImpl(User owner, String name, String id, boolean active){
+         this.id = id;
         this.owner = owner;
          this.name = name;
-         this.id = id;
+         this.active = active;
     }
 
     @Override
@@ -31,22 +33,23 @@ public class AccountImpl implements Account {
     }
 
     @Override
-    public String getName() {return this.name;
+    public String getName() {
+        return this.name;
     }
 
     @Override
     public void setName(String name) {
-
+        this.name = name;
     }
 
     @Override
     public boolean isActive() {
-        return owner.isActive();
+        return this.active;
     }
 
     @Override
     public void setActive(boolean active) {
-
+        this.active = active;
     }
 
     @Override
