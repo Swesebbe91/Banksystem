@@ -36,10 +36,10 @@ public class AccountServiceImpl implements AccountService {
         Account account = accountsRepository.getEntityById(accountId).get();
         User userAccount = usersRepository.getEntityById(userId).get();
 
-        if (!account.getOwner().equals(userAccount)){
+        if (!account.getOwner().equals(userAccount)) {
             throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_OWNER, "Not owner of account");
         }
-        if (!account.isActive()){
+        if (!account.isActive()) {
             throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_ACTIVE, "Account is not active");
         }
         changeAccountConsumer.accept(new ChangeAccount() {
@@ -70,7 +70,24 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Account inactivateAccount(String userId, String accountId) throws UseException {
-        return null;
+        // TODO: En användare ska inte kunna inaktivera ett konto som hen inte är ägare till
+        if (!accountsRepository.getEntityById(accountId).isPresent()) {
+            throw new UseException(Activity.INACTIVATE_ACCOUNT, UseExceptionType.NOT_FOUND, "Account not found");
+        } else if (!usersRepository.getEntityById(userId).isPresent()) {
+            throw new UseException(Activity.INACTIVATE_ACCOUNT, UseExceptionType.USER_NOT_FOUND, "User not found");
+        }
+        Account account = accountsRepository.getEntityById(accountId).get();
+        User userAccount = usersRepository.getEntityById(userId).get();
+
+        if (!account.getOwner().equals(userAccount)){
+            throw new UseException(Activity.INACTIVATE_ACCOUNT, UseExceptionType.NOT_OWNER, "Not Owner");
+        }
+        if (!account.isActive()) {
+            throw new UseException(Activity.INACTIVATE_ACCOUNT, UseExceptionType.NOT_ACTIVE, "Not active");
+        }
+        account.setActive(false);
+        accountsRepository.save(account);
+        return account;
     }
 
     @Override

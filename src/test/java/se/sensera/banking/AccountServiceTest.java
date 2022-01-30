@@ -246,7 +246,7 @@ public class AccountServiceTest {
     }
 
     @Test
-    void inactivate_account_success() throws UseException {
+    void inactivate_account_success() throws UseException { //Klar
         // Given
         when(accountsRepository.all()).thenReturn(Stream.of(account));
         when(usersRepository.getEntityById(eq(userId))).thenReturn(Optional.of(user));
@@ -262,7 +262,7 @@ public class AccountServiceTest {
     }
 
     @Test
-    void inactivate_account_failed_because_not_found() {
+    void inactivate_account_failed_because_not_found() { //Klar
         // Given
         when(usersRepository.getEntityById(eq(userId))).thenReturn(Optional.of(user));
         when(accountsRepository.getEntityById(eq(accountId))).thenReturn(Optional.of(account));
@@ -278,7 +278,7 @@ public class AccountServiceTest {
     }
 
     @Test
-    void inactivate_account_failed_because_user_not_found() {
+    void inactivate_account_failed_because_user_not_found() { // klar
         // Given
         when(accountsRepository.getEntityById(eq(accountId))).thenReturn(Optional.of(account));
 
@@ -328,7 +328,7 @@ public class AccountServiceTest {
     }
 
     @Test
-    void inactivate_account_failed_because_user_not_active() {
+    void inactivate_account_failed_because_user_not_active() { // klar
         // Given
         when(accountsRepository.all()).thenReturn(Stream.of(account));
         when(account.isActive()).thenReturn(false);
