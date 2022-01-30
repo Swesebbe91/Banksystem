@@ -1,8 +1,8 @@
 package se.sensera.banking.Implementation;
 
-import se.sensera.banking.Account;
-import se.sensera.banking.User;
+import se.sensera.banking.*;
 
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class AccountImpl implements Account {
@@ -10,6 +10,9 @@ public class AccountImpl implements Account {
     private User owner;
     private String name;
     private boolean active;
+    AccountsRepository accountsRepository;
+    UsersRepository usersRepository;
+    private Stream<User> users;
 
 
     public AccountImpl() {
@@ -59,6 +62,9 @@ public class AccountImpl implements Account {
 
     @Override
     public void addUser(User user) {
+
+        //accountsRepository.save(user);;
+        //users.peek(System.out::println).collect(Collectors.toList());
 
     }
 

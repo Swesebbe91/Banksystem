@@ -2,6 +2,7 @@ package se.sensera.banking;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import se.sensera.banking.Implementation.AccountServiceImpl;
 import se.sensera.banking.exceptions.Activity;
 import se.sensera.banking.exceptions.UseException;
 import se.sensera.banking.exceptions.UseExceptionType;
@@ -37,7 +38,7 @@ public class AccountServiceUsersTest {
         usersRepository = mock(UsersRepository.class);
         accountsRepository = mock(AccountsRepository.class);
 
-        accountService = null; //TODO create Your implementing class here
+        accountService = new AccountServiceImpl(usersRepository, accountsRepository); //TODO create Your implementing class here
 
         userId = UUID.randomUUID().toString();
         otherUserId = UUID.randomUUID().toString();

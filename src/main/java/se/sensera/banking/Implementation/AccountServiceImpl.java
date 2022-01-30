@@ -60,7 +60,12 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Account addUserToAccount(String userId, String accountId, String userIdToBeAssigned) throws UseException {
-        return null;
+        //TODO: En användare ska kunna lägga till en användare till ett konto
+        Account accountUser = accountsRepository.getEntityById(accountId).get(); //HITTAT KONTOT
+        User newUser = usersRepository.getEntityById(userIdToBeAssigned).get();
+        usersRepository.save(newUser);
+        accountUser.addUser(newUser);
+        return accountsRepository.save(accountUser);
     }
 
     @Override
@@ -70,7 +75,6 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Account inactivateAccount(String userId, String accountId) throws UseException {
-        // TODO: En användare ska inte kunna inaktivera ett konto som hen inte är ägare till
         if (!accountsRepository.getEntityById(accountId).isPresent()) {
             throw new UseException(Activity.INACTIVATE_ACCOUNT, UseExceptionType.NOT_FOUND, "Account not found");
         } else if (!usersRepository.getEntityById(userId).isPresent()) {

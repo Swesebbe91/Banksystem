@@ -63,7 +63,6 @@ public class AccountServiceFindTest {
                 svenExtraAccount
         ));
     }
-
     @ParameterizedTest
     @MethodSource("provideSearchTestData")
     void find_accounts_success(String searchValue, String userId, Integer pageNumber, Integer pageSize, AccountService.SortOrder sortOrder, Matcher<Iterable<Account>> matcher) throws UseException {
@@ -162,5 +161,4 @@ public class AccountServiceFindTest {
         when(user.toString()).thenReturn(name);
         return user;
     }
-
 }
