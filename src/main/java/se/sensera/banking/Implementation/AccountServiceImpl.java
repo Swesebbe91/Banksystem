@@ -4,8 +4,13 @@ import se.sensera.banking.*;
 import se.sensera.banking.exceptions.Activity;
 import se.sensera.banking.exceptions.UseException;
 import se.sensera.banking.exceptions.UseExceptionType;
+import se.sensera.banking.utils.ListUtils;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
@@ -90,9 +95,8 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Account removeUserFromAccount(String userId, String accountId, String userIdToBeAssigned) throws UseException {
-            Account account = accountsRepository.getEntityById(accountId).get();
-            User currUser = usersRepository.getEntityById(userIdToBeAssigned).get();
-
+        Account account = accountsRepository.getEntityById(accountId).get();
+        User currUser = usersRepository.getEntityById(userIdToBeAssigned).get();
         if (!account.getOwner().getId().equals(userId)) {//Test rad 94. Ska inte kunna lägga till användare för att man inte är ägare
             throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_OWNER, "Not owner");
         }
@@ -102,8 +106,6 @@ public class AccountServiceImpl implements AccountService {
             account.removeUser(currUser);
             accountsRepository.save(account);
             return account;
-
-
     }
 
     @Override
@@ -129,6 +131,18 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Stream<Account> findAccounts(String searchValue, String userId, Integer pageNumber, Integer pageSize, SortOrder sortOrder) throws UseException {
-        return accountsRepository.all();
+
+        List<Account> listOfAccounts;
+        listOfAccounts = accountsRepository.all()
+                .filter(x -> x.getName().toLowerCase().contains(searchValue.toLowerCase()))
+                .collect(Collectors.toList());
+
+
+        /*listOfAccounts.stream()
+                .filter(searchValue.equals());*/
+
+        return ListUtils.applyPage(listOfAccounts.stream(), pageNumber, pageSize);
     }
+
+
 }
