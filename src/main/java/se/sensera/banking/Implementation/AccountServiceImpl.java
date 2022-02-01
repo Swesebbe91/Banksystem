@@ -49,6 +49,9 @@ public class AccountServiceImpl implements AccountService {
                 } else {//Inga fel funna, byter namn.
                     if (accountsRepository.all().anyMatch(x -> x.getName().contains(name))) {
                         throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.ACCOUNT_NAME_NOT_UNIQUE, "Account name not unique");
+                    } else if(accountsRepository.all().anyMatch(x -> x.getOwner().equals(name))){
+                        System.out.println("Jag är här");
+                        throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_OWNER, "Not the rightful account owner");
                     }
                     account.setName(name);
                     accountsRepository.save(account);
@@ -60,26 +63,47 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Account addUserToAccount(String userId, String accountId, String userIdToBeAssigned) throws UseException {
+        if (accountsRepository.getEntityById(accountId).isEmpty()) {
+            throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_FOUND, "Account does not exist");
+        }
         Account accountUser = accountsRepository.getEntityById(accountId).get(); //Nuvarande account
         User currentUser = usersRepository.getEntityById(userId).get(); //Nuvarande user
         User newUser = usersRepository.getEntityById(userIdToBeAssigned).get(); //ny user
-
-        if (!accountUser.getOwner().getId().equals(currentUser.getId())) {//Test rad 94. Ska inte kunna lägga till användare för att man inte är ägare
+        Account account = accountsRepository.getEntityById(accountId).get();
+        if (!accountUser.getOwner().getId().equals(userId)) {//Test rad 94. Ska inte kunna lägga till användare för att man inte är ägare
             throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_OWNER, "Not owner");
         }
-        if (accountsRepository.getEntityById(accountId).get().getOwner().getId().equals(userIdToBeAssigned)){//Test rad 80, kan inte lägga till ägare som användare
+        if (!account.isActive()) {
+            throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.ACCOUNT_NOT_ACTIVE, "Account not active"); //account inte aktivt
+        }
+        if (account.getOwner().getId().equals(userIdToBeAssigned)) {//Test rad 80, kan inte lägga till ägare som användare
             throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.CANNOT_ADD_OWNER_AS_USER, "Cannot add owner as user");
         }
-        //HITTAT KONTOT
-        usersRepository.save(newUser);
-        accountsRepository.save(accountUser);
-        accountUser.addUser(newUser);
-        return accountUser;
+        if (account.getUsers().anyMatch(x -> x.getId().equals(userIdToBeAssigned))) {
+            throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.USER_ALREADY_ASSIGNED_TO_THIS_ACCOUNT, "Already assigned");
+        }
+            usersRepository.save(newUser);
+            accountsRepository.save(accountUser);
+            accountUser.addUser(newUser);
+            return accountUser;
     }
 
     @Override
     public Account removeUserFromAccount(String userId, String accountId, String userIdToBeAssigned) throws UseException {
-        return null;
+            Account account = accountsRepository.getEntityById(accountId).get();
+            User currUser = usersRepository.getEntityById(userIdToBeAssigned).get();
+
+        if (!account.getOwner().getId().equals(userId)) {//Test rad 94. Ska inte kunna lägga till användare för att man inte är ägare
+            throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_OWNER, "Not owner");
+        }
+        if(account.getUsers().noneMatch(x -> x.getId().equals(userIdToBeAssigned))){
+            throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.USER_NOT_ASSIGNED_TO_THIS_ACCOUNT,"Are you lost?");
+        }
+            account.removeUser(currUser);
+            accountsRepository.save(account);
+            return account;
+
+
     }
 
     @Override
