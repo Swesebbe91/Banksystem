@@ -54,9 +54,6 @@ public class AccountServiceImpl implements AccountService {
                 } else {//Inga fel funna, byter namn.
                     if (accountsRepository.all().anyMatch(x -> x.getName().contains(name))) {
                         throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.ACCOUNT_NAME_NOT_UNIQUE, "Account name not unique");
-                    } else if(accountsRepository.all().anyMatch(x -> x.getOwner().equals(name))){
-                        System.out.println("Jag är här");
-                        throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_OWNER, "Not the rightful account owner");
                     }
                     account.setName(name);
                     accountsRepository.save(account);
@@ -135,6 +132,7 @@ public class AccountServiceImpl implements AccountService {
         List<Account> listOfAccounts;
         listOfAccounts = accountsRepository.all()
                 .filter(x -> x.getName().toLowerCase().contains(searchValue.toLowerCase()))
+                .sorted(Comparator.comparing(Account::getName))
                 .collect(Collectors.toList());
 
 
