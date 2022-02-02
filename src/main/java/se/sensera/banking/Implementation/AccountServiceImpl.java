@@ -6,9 +6,7 @@ import se.sensera.banking.exceptions.UseException;
 import se.sensera.banking.exceptions.UseExceptionType;
 import se.sensera.banking.utils.ListUtils;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -128,25 +126,43 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Stream<Account> findAccounts(String searchValue, String userId, Integer pageNumber, Integer pageSize, SortOrder sortOrder) throws UseException {
-        List<Account> listOfAccounts = new ArrayList<>();
-        // Vid en slagning kommer en searchValue som kan vara namn/Personnummer
-        // Gå igenom repot med konton
-        // Baserat på searchValue vill vi filtrera ut dem
-        // Beroende på hur användaren vill ha det filtrerat, sorterar vi dem utifrån sortOrder
-        //Hämta ut Lisas account
-        // spara till lista
-
-        listOfAccounts = accountsRepository.all()
-                .filter(x -> x.getName().toLowerCase().contains(searchValue.toLowerCase()))
-                .map(x -> {
-                    if(x.getId().contains(userId)){
-                        return x;
-                    }else
-                        return null;
-                })
-                .sorted(Comparator.comparing(Account::getName))
-                .collect(Collectors.toList());
-
-        return ListUtils.applyPage(listOfAccounts.stream(), pageNumber, pageSize);
+        List<Account> listOfAccount = null;
+        switch (sortOrder) {
+            case None -> {
+                if (searchValue.equals("")) {
+                    listOfAccount = accountsRepository.all().collect(Collectors.toList());
+                } else {
+                    accountsRepository.all().filter(x -> x.getName().toLowerCase().contains(searchValue.toLowerCase()));
+                }
+            }
+            case AccountName -> {
+                listOfAccount = accountsRepository.all()
+                        .filter(x -> x.getName().equals(userId))
+                        .collect(Collectors.toList());
+            }
+            default -> throw new IllegalStateException("Unexpected value: " + sortOrder);
+        }
+        return ListUtils.applyPage(listOfAccount.stream(), pageNumber, pageSize);
     }
 }
+
+
+
+// Vid en slagning kommer en searchValue som kan vara namn/Personnummer
+// Gå igenom repot med konton
+// Baserat på searchValue vill vi filtrera ut dem
+// Beroende på hur användaren vill ha det filtrerat, sorterar vi dem utifrån sortOrder
+//Hämta ut Lisas account
+// spara till lista
+
+        /*if (SortOrder.AccountName.equals(sortOrder)) {
+            listOfAccounts = accountsRepository.all()
+                    .sorted(Comparator.comparing(Account::getName))
+                    .collect(Collectors.toList());
+        }*/
+
+
+//listOfAccounts = accountsRepository.all()
+
+
+

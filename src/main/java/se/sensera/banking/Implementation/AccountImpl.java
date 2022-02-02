@@ -10,17 +10,10 @@ public class AccountImpl implements Account {
     private User owner;
     private String name;
     private boolean active;
-    AccountsRepository accountsRepository;
-    UsersRepository usersRepository;
-    private Stream<User> users;
-
-
-    public AccountImpl() {
-    }
 
     public AccountImpl(User owner, String name, String id, boolean active){
          this.id = id;
-        this.owner = owner;
+         this.owner = owner;
          this.name = name;
          this.active = active;
     }

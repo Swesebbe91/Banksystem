@@ -91,7 +91,7 @@ public class AccountServiceUsersTest {
     }
 
     @Test
-    void add_user_to_account_failed_because_user_not_owner() {
+    void add_user_to_account_failed_because_user_not_owner() { //Klar
         // Given
         String userIdToBeAssigned = UUID.randomUUID().toString();
         User userToBeAssigned = mock(User.class);
@@ -112,7 +112,7 @@ public class AccountServiceUsersTest {
     }
 
     @Test
-    void add_user_to_account_failed_because_account_inactive() {
+    void add_user_to_account_failed_because_account_inactive() { //Klar
         // Given
         when(account.isActive()).thenReturn(false);
 
@@ -129,7 +129,7 @@ public class AccountServiceUsersTest {
     }
 
     @Test
-    void add_user_to_account_failed_because_account_not_found() {
+    void add_user_to_account_failed_because_account_not_found() { //Klar
         // Given
         String unknownAccountId = UUID.randomUUID().toString();
         when(accountsRepository.getEntityById(eq(unknownAccountId))).thenReturn(Optional.empty());
@@ -147,7 +147,7 @@ public class AccountServiceUsersTest {
     }
 
     @Test
-    void add_user_to_account_failed_because_user_already_assigned_to_account() throws UseException {
+    void add_user_to_account_failed_because_user_already_assigned_to_account() throws UseException { //Klar
         // Given
         when(account.getUsers()).then(invocation -> Stream.of(otherUser));
 
@@ -164,7 +164,7 @@ public class AccountServiceUsersTest {
     }
 
     @Test
-    void remove_user_from_account_success() throws UseException {
+    void remove_user_from_account_success() throws UseException { //Klar
         // Given
         when(account.getUsers()).thenReturn(Stream.of(otherUser));
 
@@ -177,7 +177,7 @@ public class AccountServiceUsersTest {
     }
 
     @Test
-    void remove_user_from_account_failed_because_not_owner() {
+    void remove_user_from_account_failed_because_not_owner() { //Klar
         // Given
         String extraUserId = UUID.randomUUID().toString();
         User extraUser = mock(User.class);
@@ -197,7 +197,7 @@ public class AccountServiceUsersTest {
     }
 
     @Test
-    void remove_user_from_account_failed_because_user_not_assigned_to_this_account() {
+    void remove_user_from_account_failed_because_user_not_assigned_to_this_account() { //Klar
         // When
         UseException userException = assertThrows(UseException.class, () -> {
             accountService.removeUserFromAccount(userId, account.getId(), otherUserId);

@@ -83,10 +83,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Stream<User> find(String searchString, Integer pageNumber, Integer pageSize, SortOrder sortOrder) {
-        /*return usersRepository.all()
-                .filter(user -> user.getName().toLowerCase().contains(searchString));
-    }
-    }*/
         List<User> listOfUsers;
         if (pageNumber == null || pageNumber <= 1) {
             if (searchString.equals("")) {
