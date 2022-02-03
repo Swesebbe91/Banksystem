@@ -92,7 +92,7 @@ public class AccountServiceImpl implements AccountService {
     public Account removeUserFromAccount(String userId, String accountId, String userIdToBeAssigned) throws UseException {
         Account account = accountsRepository.getEntityById(accountId).get();
         User currUser = usersRepository.getEntityById(userIdToBeAssigned).get();
-        if (!account.getOwner().getId().equals(userId)) {//Test rad 94. Ska inte kunna lägga till användare för att man inte är ägare
+        if (!account.getOwner().getId().equals(userId)) {
             throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_OWNER, "Not owner");
         }
         if (account.getUsers().noneMatch(x -> x.getId().equals(userIdToBeAssigned))) {
@@ -126,43 +126,17 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Stream<Account> findAccounts(String searchValue, String userId, Integer pageNumber, Integer pageSize, SortOrder sortOrder) throws UseException {
-        List<Account> listOfAccount = null;
-        switch (sortOrder) {
-            case None -> {
-                if (searchValue.equals("")) {
-                    listOfAccount = accountsRepository.all().collect(Collectors.toList());
-                } else {
-                    accountsRepository.all().filter(x -> x.getName().toLowerCase().contains(searchValue.toLowerCase()));
-                }
-            }
-            case AccountName -> {
-                listOfAccount = accountsRepository.all()
-                        .filter(x -> x.getName().equals(userId))
-                        .collect(Collectors.toList());
-            }
-            default -> throw new IllegalStateException("Unexpected value: " + sortOrder);
+        Stream<Account> accountStream = accountsRepository.all();
+        if (searchValue != null && !searchValue.isEmpty()) {
+            accountStream = accountStream.filter(account -> account.getName().toLowerCase().contains(searchValue.toLowerCase()));
         }
-        return ListUtils.applyPage(listOfAccount.stream(), pageNumber, pageSize);
+        if (userId != null) {
+            User my = usersRepository.getEntityById(userId).get();
+            accountStream = accountStream.filter(account -> account.getUsers().anyMatch(user -> user.getId().equals(userId)) || account.getOwner().equals(my));
+        }
+        if (SortOrder.AccountName.equals(sortOrder)) {
+            accountStream = accountStream.sorted(Comparator.comparing(Account::getName));
+        }
+        return ListUtils.applyPage(accountStream, pageNumber, pageSize);
     }
 }
-
-
-
-// Vid en slagning kommer en searchValue som kan vara namn/Personnummer
-// Gå igenom repot med konton
-// Baserat på searchValue vill vi filtrera ut dem
-// Beroende på hur användaren vill ha det filtrerat, sorterar vi dem utifrån sortOrder
-//Hämta ut Lisas account
-// spara till lista
-
-        /*if (SortOrder.AccountName.equals(sortOrder)) {
-            listOfAccounts = accountsRepository.all()
-                    .sorted(Comparator.comparing(Account::getName))
-                    .collect(Collectors.toList());
-        }*/
-
-
-//listOfAccounts = accountsRepository.all()
-
-
-
