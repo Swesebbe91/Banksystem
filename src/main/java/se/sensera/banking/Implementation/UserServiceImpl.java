@@ -4,6 +4,7 @@ import se.sensera.banking.*;
 import se.sensera.banking.exceptions.Activity;
 import se.sensera.banking.exceptions.UseException;
 import se.sensera.banking.exceptions.UseExceptionType;
+import se.sensera.banking.utils.ListUtils;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -44,42 +45,20 @@ public class UserServiceImpl implements UserService {
                     throw new UseException(Activity.UPDATE_USER, UseExceptionType.USER_PERSONAL_ID_NOT_UNIQUE, "Not unique personal identification number");
                 }
             }
-
-            private boolean checkIfUniquePid(String pid) {
-                return usersRepository.all().noneMatch(x -> x.getPersonalIdentificationNumber().equals(pid));
-            }
         };
         changeUser.accept(updatedUser);
         return user;
-    }
-
-    private User checkIfUserExist(String userId) throws UseException {
-        return getUser(userId).orElseThrow(() -> new UseException(Activity.UPDATE_USER, UseExceptionType.NOT_FOUND, "empty"));
     }
 
     @Override
     public User inactivateUser(String userId) throws UseException {
         return getUser(userId)
                 .map(user -> {
-
                     user.setActive(false);
                     return user;
                 })
                 .map(usersRepository::save)
                 .orElseThrow(() -> new UseException(Activity.UPDATE_USER, UseExceptionType.NOT_FOUND, "Couldn't find userID"));
-
-        /*User user = usersRepository.getEntityById(userId)
-                .orElseThrow(() -> new UseException(Activity.UPDATE_USER, UseExceptionType.NOT_FOUND, "Couldn't find userID"));
-        user.setActive(false);
-        return usersRepository.save(user);*/
-
-        /* User inactiveUser;
-        if (usersRepository.getEntityById(userId).isEmpty()) {
-            throw new UseException(Activity.UPDATE_USER, UseExceptionType.NOT_FOUND, "Couldn't find userID");
-        }
-        inactiveUser = usersRepository.getEntityById(userId).get();
-        inactiveUser.setActive(false);
-        return usersRepository.save(inactiveUser); */
     }
 
     @Override
@@ -89,33 +68,30 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Stream<User> find(String searchString, Integer pageNumber, Integer pageSize, SortOrder sortOrder) {
-        List<User> listOfUsers;
-        if (pageNumber == null || pageNumber <= 1) {
-            if (searchString.equals("")) {
-                if (SortOrder.Name.equals(sortOrder)) {
-                    listOfUsers = usersRepository.all()
-                            .sorted(Comparator.comparing(User::getName))
-                            .collect(Collectors.toList());
-                } else if (SortOrder.PersonalId.equals(sortOrder)) {
-                    listOfUsers = usersRepository.all()
-                            .sorted(Comparator.comparing(User::getPersonalIdentificationNumber))
-                            .collect(Collectors.toList());
-                } else {
-                    listOfUsers = usersRepository.all()
-                            .filter(User::isActive)
-                            .collect(Collectors.toList());
-                }
-            } else {
-                listOfUsers = usersRepository.all()
-                        .filter(x -> x.getName().toLowerCase().contains(searchString))
-                        .collect(Collectors.toList());
-            }
-        } else {
-            listOfUsers = Collections.emptyList();
-            return listOfUsers.stream();
+        Stream<User> userStream = usersRepository.all();
+        userStream = getUserStreamBasedOnString(searchString, userStream);
+        userStream = getUserStreamBasedOnValue(sortOrder, userStream);
+        return ListUtils.applyPage(userStream, pageNumber, pageSize);
+    }
+
+    private boolean checkIfUniquePid(String pid) {
+        return usersRepository.all().noneMatch(x -> x.getPersonalIdentificationNumber().equals(pid));
+    }
+
+    private User checkIfUserExist(String userId) throws UseException {
+        return getUser(userId).orElseThrow(() -> new UseException(Activity.UPDATE_USER, UseExceptionType.NOT_FOUND, "empty"));
+    }
+
+    private Stream<User> getUserStreamBasedOnString(String searchString, Stream<User> userStream) {
+        return userStream.filter(x -> x.getName().toLowerCase().contains(searchString));
+    }
+
+    private Stream<User> getUserStreamBasedOnValue(SortOrder sortOrder, Stream<User> streamOfUsers) {
+        switch (sortOrder) {
+            case Name -> streamOfUsers = streamOfUsers.sorted(Comparator.comparing(User::getName));
+            case PersonalId -> streamOfUsers = streamOfUsers.sorted(Comparator.comparing(User::getPersonalIdentificationNumber));
+            default -> streamOfUsers = streamOfUsers.filter(User::isActive);
         }
-        return listOfUsers.stream();
+        return streamOfUsers;
     }
 }
-
-
