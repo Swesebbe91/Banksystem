@@ -28,36 +28,40 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User changeUser(String userId, Consumer<ChangeUser> changeUser) throws UseException {
-        User updatedUser;
-        if (usersRepository.getEntityById(userId).isEmpty()) //Tittar först om det vi hämtar är tomt.
-            throw new UseException(Activity.UPDATE_USER, UseExceptionType.NOT_FOUND, "empty");
-        else {
-            updatedUser = usersRepository.getEntityById(userId).get(); //OM där finns något, sätt värdet!
-        }
-        ChangeUser test = new ChangeUser() {
+        User user = checkIfUserExist(userId);
+        ChangeUser updatedUser = new ChangeUser() {
             @Override
             public void setName(String name) {
-                updatedUser.setName(name);
-                usersRepository.save(updatedUser);
+                user.setName(name);
+                usersRepository.save(user);
             }
             @Override
             public void setPersonalIdentificationNumber(String personalIdentificationNumber) throws UseException {
-                if (usersRepository.all().anyMatch(x -> x.getPersonalIdentificationNumber().equals(personalIdentificationNumber))) {
-                    throw new UseException(Activity.UPDATE_USER, UseExceptionType.USER_PERSONAL_ID_NOT_UNIQUE, "Not unique personalnr");
+                if (checkIfUniquePid(personalIdentificationNumber)) {
+                    user.setPersonalIdentificationNumber(personalIdentificationNumber);
+                    usersRepository.save(user);
                 } else {
-                    updatedUser.setPersonalIdentificationNumber(personalIdentificationNumber);
-                    usersRepository.save(updatedUser);
+                    throw new UseException(Activity.UPDATE_USER, UseExceptionType.USER_PERSONAL_ID_NOT_UNIQUE, "Not unique personal identification number");
                 }
             }
+
+            private boolean checkIfUniquePid(String pid) {
+                return usersRepository.all().noneMatch(x -> x.getPersonalIdentificationNumber().equals(pid));
+            }
         };
-        changeUser.accept(test);
-        return updatedUser;
+        changeUser.accept(updatedUser);
+        return user;
+    }
+
+    private User checkIfUserExist(String userId) throws UseException {
+        return getUser(userId).orElseThrow(() -> new UseException(Activity.UPDATE_USER, UseExceptionType.NOT_FOUND, "empty"));
     }
 
     @Override
     public User inactivateUser(String userId) throws UseException {
         return getUser(userId)
                 .map(user -> {
+
                     user.setActive(false);
                     return user;
                 })
