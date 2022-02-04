@@ -8,9 +8,8 @@ import se.sensera.banking.utils.ListUtils;
 
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
-
 
 public class AccountServiceImpl implements AccountService {
 
@@ -30,35 +29,38 @@ public class AccountServiceImpl implements AccountService {
         } else if (accountsRepository.all().anyMatch(x -> x.getName().equals(accountName))) {
             throw new UseException(Activity.CREATE_ACCOUNT, UseExceptionType.ACCOUNT_NAME_NOT_UNIQUE, "Not unique name");
         }
-        User user = usersRepository.getEntityById(userId).get();
-
-        return accountsRepository.save(factory.createAccountObject(user, accountName, userId, true)); // Factory pattern
+        return accountsRepository.save(factory.createAccountObject(usersRepository.getEntityById(userId).get(), accountName, userId, true)); // Factory pattern
     }
 
     @Override
     public Account changeAccount(String userId, String accountId, Consumer<ChangeAccount> changeAccountConsumer) throws UseException {
         Account account = accountsRepository.getEntityById(accountId).get();
         User userAccount = usersRepository.getEntityById(userId).get();
-        if (!account.getOwner().equals(userAccount)) {
-            throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_OWNER, "Not owner of account");
-        }
-        if (!account.isActive()) {
-            throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_ACTIVE, "Account is not active");
-        }
-        changeAccountConsumer.accept(new ChangeAccount() {
-            @Override
-            public void setName(String name) throws UseException {
-                if (name.equals(account.getName())) { // Tar hand om samma namn - inget ska hända.
-                } else {//Inga fel funna, byter namn.
-                    if (accountsRepository.all().anyMatch(x -> x.getName().contains(name))) {
-                        throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.ACCOUNT_NAME_NOT_UNIQUE, "Account name not unique");
-                    }
-                    account.setName(name);
-                    accountsRepository.save(account);
+        checkIfAccountOwner(account, userAccount);
+        checkIfAccountIsActive(account);
+
+        changeAccountConsumer.accept(name -> {
+            if (name.equals(account.getName())) { // Tar hand om samma namn - inget ska hända.
+            } else {//Inga fel funna, byter namn.
+                if (accountsRepository.all().anyMatch(x -> x.getName().contains(name))) {
+                    throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.ACCOUNT_NAME_NOT_UNIQUE, "Account name not unique");
                 }
+                account.setName(name);
+                accountsRepository.save(account);
             }
         });
         return account;
+    }
+
+    private void checkIfAccountOwner(Account account, User userAccount) throws UseException {
+        if (!account.getOwner().equals(userAccount)) {
+            throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_OWNER, "Not owner of account");
+        }
+    }
+        private void checkIfAccountIsActive(Account account) throws UseException {
+        if (!account.isActive()) {
+            throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_ACTIVE, "Account is not active");
+        }
     }
 
     @Override
@@ -127,16 +129,25 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public Stream<Account> findAccounts(String searchValue, String userId, Integer pageNumber, Integer pageSize, SortOrder sortOrder) throws UseException {
         Stream<Account> accountStream = accountsRepository.all();
-        if (searchValue != null && !searchValue.isEmpty()) {
-            accountStream = accountStream.filter(account -> account.getName().toLowerCase().contains(searchValue.toLowerCase()));
-        }
-        if (userId != null) {
-            User my = usersRepository.getEntityById(userId).get();
-            accountStream = accountStream.filter(account -> account.getUsers().anyMatch(user -> user.getId().equals(userId)) || account.getOwner().equals(my));
-        }
-        if (SortOrder.AccountName.equals(sortOrder)) {
-            accountStream = accountStream.sorted(Comparator.comparing(Account::getName));
-        }
+            accountStream = getStreamBasedOnSearchValue(searchValue, accountStream);
+            accountStream = getStreamAllAccountsToUser(userId, accountStream, () -> usersRepository.getEntityById(userId).get());
+            accountStream = getStreamBasedOnAccountName(sortOrder, accountStream);
         return ListUtils.applyPage(accountStream, pageNumber, pageSize);
+    }
+
+    private Stream<Account> getStreamBasedOnAccountName(SortOrder sortOrder, Stream<Account> accountStream) {
+        return accountStream.sorted(Comparator.comparing(Account::getName));
+    }
+
+    private Stream<Account> getStreamAllAccountsToUser(String userId, Stream<Account> accountStream, Supplier<User> userSupplier) {
+        if (userId != null) {
+            User currentUser = userSupplier.get();
+            accountStream = accountStream.filter(account -> account.getUsers().anyMatch(user -> user.getId().equals(userId)) || account.getOwner().equals(currentUser));
+        }
+        return accountStream;
+    }
+
+    private Stream<Account> getStreamBasedOnSearchValue(String searchValue, Stream<Account> accountStream) {
+        return accountStream.filter(account -> account.getName().toLowerCase().contains(searchValue.toLowerCase()));
     }
 }

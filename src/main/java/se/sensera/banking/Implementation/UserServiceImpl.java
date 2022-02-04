@@ -5,10 +5,8 @@ import se.sensera.banking.exceptions.Activity;
 import se.sensera.banking.exceptions.UseException;
 import se.sensera.banking.exceptions.UseExceptionType;
 import se.sensera.banking.utils.ListUtils;
-
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class UserServiceImpl implements UserService {
@@ -33,6 +31,7 @@ public class UserServiceImpl implements UserService {
         ChangeUser updatedUser = new ChangeUser() {
             @Override
             public void setName(String name) {
+
                 user.setName(name);
                 usersRepository.save(user);
             }
