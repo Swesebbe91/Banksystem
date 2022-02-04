@@ -16,6 +16,7 @@ public class AccountServiceImpl implements AccountService {
 
     final UsersRepository usersRepository;
     final AccountsRepository accountsRepository;
+    Factory factory = new Factory();
 
     public AccountServiceImpl(UsersRepository usersRepository, AccountsRepository accountsRepository) {
         this.usersRepository = usersRepository;
@@ -30,15 +31,14 @@ public class AccountServiceImpl implements AccountService {
             throw new UseException(Activity.CREATE_ACCOUNT, UseExceptionType.ACCOUNT_NAME_NOT_UNIQUE, "Not unique name");
         }
         User user = usersRepository.getEntityById(userId).get();
-        AccountImpl account = new AccountImpl(user, accountName, userId, true);
-        return accountsRepository.save(account);
+
+        return accountsRepository.save(factory.createAccountObject(user, accountName, userId, true)); // Factory pattern
     }
 
     @Override
     public Account changeAccount(String userId, String accountId, Consumer<ChangeAccount> changeAccountConsumer) throws UseException {
         Account account = accountsRepository.getEntityById(accountId).get();
         User userAccount = usersRepository.getEntityById(userId).get();
-
         if (!account.getOwner().equals(userAccount)) {
             throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_OWNER, "Not owner of account");
         }

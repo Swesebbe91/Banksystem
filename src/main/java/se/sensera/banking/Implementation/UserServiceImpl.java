@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 public class UserServiceImpl implements UserService {
 
     final UsersRepository usersRepository;
+    Factory factory = new Factory();
 
     public UserServiceImpl(UsersRepository usersRepository) {
         this.usersRepository = usersRepository;
@@ -20,11 +21,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User createUser(String name, String personalIdentificationNumber) throws UseException {
-        if (usersRepository.all()
-                .anyMatch(user -> user.getPersonalIdentificationNumber().equals(personalIdentificationNumber)))
+        if (usersRepository.all().anyMatch(user -> user.getPersonalIdentificationNumber().equals(personalIdentificationNumber)))
             throw new UseException(Activity.CREATE_USER, UseExceptionType.USER_PERSONAL_ID_NOT_UNIQUE, "Cannot create account");
-        UserImpl newUser = new UserImpl(UUID.randomUUID().toString(), name, personalIdentificationNumber, true);
-        return usersRepository.save(newUser);
+        return usersRepository.save(factory.createUserObject(UUID.randomUUID().toString(), name, personalIdentificationNumber, true)); // factory pattern
     }
 
     @Override
@@ -58,7 +57,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public User inactivateUser(String userId) throws UseException {
         return getUser(userId)
-                .map(user -> { user.setActive(false); return user;})
+                .map(user -> {
+                    user.setActive(false);
+                    return user;
+                })
                 .map(usersRepository::save)
                 .orElseThrow(() -> new UseException(Activity.UPDATE_USER, UseExceptionType.NOT_FOUND, "Couldn't find userID"));
 

@@ -1,5 +1,6 @@
 package se.sensera.banking.Implementation;
 
+import lombok.Data;
 import se.sensera.banking.*;
 
 import java.util.stream.Collectors;
