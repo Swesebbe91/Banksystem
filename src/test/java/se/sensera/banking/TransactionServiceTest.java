@@ -2,6 +2,8 @@ package se.sensera.banking;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import se.sensera.banking.Implementation.AccountServiceImpl;
+import se.sensera.banking.Implementation.TransactionServiceImpl;
 import se.sensera.banking.exceptions.Activity;
 import se.sensera.banking.exceptions.UseException;
 import se.sensera.banking.exceptions.UseExceptionType;
@@ -42,7 +44,7 @@ public class TransactionServiceTest {
         accountsRepository = mock(AccountsRepository.class);
         transactionsRepository = mock(TransactionsRepository.class);
 
-        transactionService = null; //TODO create Your implementing class here
+        transactionService = new TransactionServiceImpl(usersRepository, accountsRepository, transactionsRepository); //TODO create Your implementing class here
 
         user = createUser("Arne Arnesson", "9283749238472", true);
         otherUser = createUser("Arne Arnesson", "9283749238472", true);
