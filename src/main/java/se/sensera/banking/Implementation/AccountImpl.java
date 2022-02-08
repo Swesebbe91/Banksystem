@@ -1,16 +1,16 @@
 package se.sensera.banking.Implementation;
 
-import lombok.Data;
 import se.sensera.banking.*;
-
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Stream;
 
 public class AccountImpl implements Account {
-    private String id;
-    private User owner;
+    private final String id;
+    private final User owner;
     private String name;
     private boolean active;
+    private List<User> userList = new ArrayList<>();
 
     public AccountImpl(User owner, String name, String id, boolean active){
          this.id = id;
@@ -56,14 +56,11 @@ public class AccountImpl implements Account {
 
     @Override
     public void addUser(User user) {
-
-        // accountsRepository.save(user);;
-        // users.peek(System.out::println).collect(Collectors.toList());
-
+        userList.add(user);
     }
 
     @Override
     public void removeUser(User user) {
-
+        userList.remove(user);
     }
 }

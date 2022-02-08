@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 public class AccountServiceImpl implements AccountService {
 
     final UsersRepository usersRepository;
-    final AccountsRepository accountsRepository;
+    AccountsRepository accountsRepository;
     Factory factory = new Factory();
 
     public AccountServiceImpl(UsersRepository usersRepository, AccountsRepository accountsRepository) {
@@ -23,52 +23,58 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Account createAccount(String userId, String accountName) throws UseException {
-        verifyBeforeCreateAccount(userId, accountName);
-        return accountsRepository.save(factory.createAccountObject(usersRepository.getEntityById(userId).get(), accountName, userId, true)); // Factory pattern
+        verifyBeforeCreatingAccount(userId, accountName);
+        //return accountsRepository.save(factory.createAccountObject(usersRepository.getEntityById(userId).get(), accountName, userId, true)); // Factory pattern
+        return accountsRepository.save(factory.createAccountObject(getUser(userId), accountName, userId, true)); // Factory pattern
     }
 
     @Override
     public Account changeAccount(String userId, String accountId, Consumer<ChangeAccount> changeAccountConsumer) throws UseException {
-        Account account = accountsRepository.getEntityById(accountId).get();
+        //Account account = accountsRepository.getEntityById(accountId).get();
+        Account account = getAccount(accountId);
         verifyBeforeChanging(userId, account);
         changeAccountConsumer.accept(name -> {
             if (name.equals(account.getName())) {
             } else {
-                if (accountsRepository.all().anyMatch(x -> x.getName().contains(name))) {
-                    throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.ACCOUNT_NAME_NOT_UNIQUE, "Account name not unique");
-                }
+                verifyUniqueAccountName(name);
                 account.setName(name);
                 accountsRepository.save(account);
             }
         });
         return account;
     }
-    
+
     @Override
     public Account addUserToAccount(String userId, String accountId, String userIdToBeAssigned) throws UseException {
+        //User newUser = usersRepository.getEntityById(userIdToBeAssigned).get();
+        //Account account = accountsRepository.getEntityById(accountId).get();
         verifyAccountExist(accountId);
-        User newUser = usersRepository.getEntityById(userIdToBeAssigned).get();
-        Account account = accountsRepository.getEntityById(accountId).get();
+        Account account = getAccount(accountId);
         verifyBeforeAdding(userId, userIdToBeAssigned, account);
-        usersRepository.save(newUser);
+        User newUser = getUser(userIdToBeAssigned);
         account.addUser(newUser);
+        usersRepository.save(newUser);
         return accountsRepository.save(account);
     }
 
     @Override
     public Account removeUserFromAccount(String userId, String accountId, String userIdToBeAssigned) throws UseException {
-        Account account = accountsRepository.getEntityById(accountId).get();
-        User currentUser = usersRepository.getEntityById(userIdToBeAssigned).get();
+        //Account account = accountsRepository.getEntityById(accountId).get();
+        //User currentUser = usersRepository.getEntityById(userIdToBeAssigned).get();
+        Account account = getAccount(accountId);
         verifyBeforeRemoving(userId, userIdToBeAssigned, account);
+        User currentUser = getUser(userIdToBeAssigned);
         account.removeUser(currentUser);
         return accountsRepository.save(account);
     }
 
     @Override
     public Account inactivateAccount(String userId, String accountId) throws UseException {
-        checkIfAccountAndUserEmpty(userId, accountId);
-        Account account = accountsRepository.getEntityById(accountId).get();
-        verifyBeforeInactivate(userId, account);
+        verifyAccountAndUserEmpty(userId, accountId);
+        //Account account = accountsRepository.getEntityById(accountId).get();
+        //verifyBeforeInactivate(userId, account);
+        Account account = getAccount(accountId);
+        verifyBeforeInactivating(userId, account);
         account.setActive(false);
         return accountsRepository.save(account);
     }
@@ -81,14 +87,20 @@ public class AccountServiceImpl implements AccountService {
             accountStream = getStreamBasedOnAccountName(accountStream);
         return ListUtils.applyPage(accountStream, pageNumber, pageSize);
     }
-    private void verifyBeforeInactivate(String userId, Account account) throws UseException {
-        checkIfAccountOwner(account, userId, Activity.INACTIVATE_ACCOUNT, UseExceptionType.NOT_OWNER);
-        checkIfAccountIsActive(account, Activity.INACTIVATE_ACCOUNT, UseExceptionType.NOT_ACTIVE);
+    
+    /****** FETCH DATA FROM REPOSITORIES ******/
+    public Account getAccount(String accountId) {
+        return accountsRepository.getEntityById(accountId).get();
     }
 
-    private void verifyBeforeRemoving(String userId, String userIdToBeAssigned, Account account) throws UseException {
-        checkIfAccountOwner(account, userId, Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_OWNER);
-        checkIfNotAssignedToAccount(account, userIdToBeAssigned, Activity.UPDATE_ACCOUNT, UseExceptionType.USER_NOT_ASSIGNED_TO_THIS_ACCOUNT);
+    public User getUser(String userId) {
+        return usersRepository.getEntityById(userId).get();
+    }
+
+    /************* VERIFICATIONS **************/
+    private void verifyUniqueAccountName(String name) throws UseException {
+        if (accountsRepository.all().anyMatch(x -> x.getName().contains(name)))
+            throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.ACCOUNT_NAME_NOT_UNIQUE, "Account name not unique");
     }
 
     private void verifyAccountExist(String accountId) throws UseException {
@@ -96,12 +108,14 @@ public class AccountServiceImpl implements AccountService {
             throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_FOUND, "Account does not exist");
     }
 
-    private void verifyBeforeCreateAccount(String userId, String accountName) throws UseException {
-        if (usersRepository.getEntityById(userId).isEmpty()) {
-            throw new UseException(Activity.CREATE_ACCOUNT, UseExceptionType.USER_NOT_FOUND, "User not found");
-        } else if (accountsRepository.all().anyMatch(x -> x.getName().equals(accountName))) {
-            throw new UseException(Activity.CREATE_ACCOUNT, UseExceptionType.ACCOUNT_NAME_NOT_UNIQUE, "Not unique name");
-        }
+    private void verifyAccountAndUserEmpty(String userId, String accountId) throws UseException {
+        checkIfAccountFoundToInactivateAccount(accountId);
+        checkIfUserFoundToInactivateAccount(userId);
+    }
+
+    private void verifyBeforeCreatingAccount(String userId, String accountName) throws UseException {
+        checkIfUserFound(userId);
+        checkIfAccountNameUnique(accountName);
     }
 
     private void verifyBeforeChanging(String userId, Account account) throws UseException {
@@ -116,9 +130,30 @@ public class AccountServiceImpl implements AccountService {
         checkIfAlreadyAssigned(account, userIdToBeAssigned, Activity.UPDATE_ACCOUNT, UseExceptionType.USER_ALREADY_ASSIGNED_TO_THIS_ACCOUNT);
     }
 
+    private void verifyBeforeRemoving(String userId, String userIdToBeAssigned, Account account) throws UseException {
+        checkIfAccountOwner(account, userId, Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_OWNER);
+        checkIfNotAssignedToAccount(account, userIdToBeAssigned, Activity.UPDATE_ACCOUNT, UseExceptionType.USER_NOT_ASSIGNED_TO_THIS_ACCOUNT);
+    }
+
+    private void verifyBeforeInactivating(String userId, Account account) throws UseException {
+        checkIfAccountOwner(account, userId, Activity.INACTIVATE_ACCOUNT, UseExceptionType.NOT_OWNER);
+        checkIfAccountIsActive(account, Activity.INACTIVATE_ACCOUNT, UseExceptionType.NOT_ACTIVE);
+    }
+
+    /**************** CHECKS ******************/
     private void checkIfAccountOwner(Account account, String userId, Activity activity, UseExceptionType type) throws UseException {
         if (!account.getOwner().getId().equals(userId))
-            throw new UseException(Activity.valueOf(activity.name()), UseExceptionType.valueOf(type.name()), "Not owner of account");
+            throw new UseException(Activity.valueOf(activity.name()), UseExceptionType.valueOf(type.name()), "Person is not owner of account");
+    }
+
+    private void checkIfUserFound(String userId) throws UseException {
+        if (usersRepository.getEntityById(userId).isEmpty())
+            throw new UseException(Activity.CREATE_ACCOUNT, UseExceptionType.USER_NOT_FOUND, "User not found");
+    }
+
+    private void checkIfAccountNameUnique(String accountName) throws UseException {
+        if (accountsRepository.all().anyMatch(x -> x.getName().equals(accountName)))
+            throw new UseException(Activity.CREATE_ACCOUNT, UseExceptionType.ACCOUNT_NAME_NOT_UNIQUE, "Not unique account name");
     }
 
     private void checkIfAccountIsActive(Account account, Activity activity, UseExceptionType type) throws UseException {
@@ -133,22 +168,25 @@ public class AccountServiceImpl implements AccountService {
 
     private void checkIfAlreadyAssigned(Account account, String userIdToBeAssigned, Activity activity, UseExceptionType type) throws UseException {
         if (account.getUsers().anyMatch(x -> x.getId().equals(userIdToBeAssigned)))
-            throw new UseException(Activity.valueOf(activity.name()), UseExceptionType.valueOf(type.name()), "Already assigned");
+            throw new UseException(Activity.valueOf(activity.name()), UseExceptionType.valueOf(type.name()), "User is already assigned to account");
     }
 
     private void checkIfNotAssignedToAccount(Account account, String userIdToBeAssigned, Activity activity, UseExceptionType type) throws UseException {
         if (account.getUsers().noneMatch(x -> x.getId().equals(userIdToBeAssigned)))
-            throw new UseException(Activity.valueOf(activity.name()), UseExceptionType.valueOf(type.name()), "ARE YOU LOOOOST?");
+            throw new UseException(Activity.valueOf(activity.name()), UseExceptionType.valueOf(type.name()), "Person has no authorized access to account");
     }
 
-    private void checkIfAccountAndUserEmpty(String userId, String accountId) throws UseException {
-        if (accountsRepository.getEntityById(accountId).isEmpty()) {
+    private void checkIfAccountFoundToInactivateAccount(String accountId) throws UseException {
+        if (accountsRepository.getEntityById(accountId).isEmpty())
             throw new UseException(Activity.INACTIVATE_ACCOUNT, UseExceptionType.NOT_FOUND, "Account not found");
-        } else if (usersRepository.getEntityById(userId).isEmpty()) {
-            throw new UseException(Activity.INACTIVATE_ACCOUNT, UseExceptionType.USER_NOT_FOUND, "User not found");
-        }
     }
 
+    private void checkIfUserFoundToInactivateAccount(String userId) throws UseException {
+        if (usersRepository.getEntityById(userId).isEmpty())
+            throw new UseException(Activity.INACTIVATE_ACCOUNT, UseExceptionType.USER_NOT_FOUND, "User not found");
+    }
+
+    /**************** FETCH STREAMS *****************/
     private Stream<Account> getStreamBasedOnAccountName(Stream<Account> accountStream) {
         return accountStream.sorted(Comparator.comparing(Account::getName));
     }
@@ -165,3 +203,4 @@ public class AccountServiceImpl implements AccountService {
         return accountStream.filter(account -> account.getName().toLowerCase().contains(searchValue.toLowerCase()));
     }
 }
+

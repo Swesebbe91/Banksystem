@@ -4,6 +4,7 @@ import se.sensera.banking.Account;
 import se.sensera.banking.Transaction;
 import se.sensera.banking.User;
 
+import java.util.ArrayList;
 import java.util.Date;
 
 public class Factory {
@@ -12,11 +13,11 @@ public class Factory {
          return new UserImpl(id, name, personalIdentificationNumber, active);
      }
 
-     public Account createAccountObject(User owner, String name, String id, boolean active){
+     public Account createAccountObject(User owner, String name, String id, boolean active) {
          return new AccountImpl(owner, name, id, active);
      }
 
-     public Transaction createTransactionObject(String id, String created, User user, Account account, double amount){
+     public Transaction createTransactionObject(String id, String created, User user, Account account, double amount) {
          return new TransactionImpl(id, created, user, account, amount);
      }
 }
