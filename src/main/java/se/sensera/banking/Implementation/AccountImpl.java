@@ -1,53 +1,20 @@
 package se.sensera.banking.Implementation;
 
+import lombok.*;
 import se.sensera.banking.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class AccountImpl implements Account {
-    private final String id;
-    private final User owner;
-    private String name;
-    private boolean active;
-    private List<User> userList = new ArrayList<>();
-
-    public AccountImpl(User owner, String name, String id, boolean active){
-         this.id = id;
-         this.owner = owner;
-         this.name = name;
-         this.active = active;
-    }
-
-    @Override
-    public String getId() {
-        return this.id;
-    }
-
-    @Override
-    public User getOwner() {
-        return this.owner;
-    }
-
-    @Override
-    public String getName() {
-        return this.name;
-    }
-
-    @Override
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    @Override
-    public boolean isActive() {
-        return this.active;
-    }
-
-    @Override
-    public void setActive(boolean active) {
-        this.active = active;
-    }
+    String id;
+    User owner;
+    String name;
+    boolean active;
+    final List<User> userList = new ArrayList<>();
 
     @Override
     public Stream<User> getUsers() {

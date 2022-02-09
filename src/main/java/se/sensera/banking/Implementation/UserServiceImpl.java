@@ -20,8 +20,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User createUser(String name, String personalIdentificationNumber) throws UseException {
-        if (usersRepository.all().anyMatch(user -> user.getPersonalIdentificationNumber().equals(personalIdentificationNumber)))
-            throw new UseException(Activity.CREATE_USER, UseExceptionType.USER_PERSONAL_ID_NOT_UNIQUE, "Cannot create account");
+        verifyBeforeCreatingUser(personalIdentificationNumber);
         return usersRepository.save(factory.createUserObject(UUID.randomUUID().toString(), name, personalIdentificationNumber, true)); // factory pattern
     }
 
@@ -31,13 +30,12 @@ public class UserServiceImpl implements UserService {
         ChangeUser updatedUser = new ChangeUser() {
             @Override
             public void setName(String name) {
-
                 user.setName(name);
                 usersRepository.save(user);
             }
             @Override
             public void setPersonalIdentificationNumber(String personalIdentificationNumber) throws UseException {
-                if (checkIfUniquePid(personalIdentificationNumber)) {
+                if (verifyBeforeChangingUser(personalIdentificationNumber)) {
                     user.setPersonalIdentificationNumber(personalIdentificationNumber);
                     usersRepository.save(user);
                 } else {
@@ -73,8 +71,13 @@ public class UserServiceImpl implements UserService {
         return ListUtils.applyPage(userStream, pageNumber, pageSize);
     }
 
-    private boolean checkIfUniquePid(String pid) {
-        return usersRepository.all().noneMatch(x -> x.getPersonalIdentificationNumber().equals(pid));
+    private void verifyBeforeCreatingUser(String personalIdentificationNumber) throws UseException {
+        if (usersRepository.all().anyMatch(user -> user.getPersonalIdentificationNumber().equals(personalIdentificationNumber)))
+            throw new UseException(Activity.CREATE_USER, UseExceptionType.USER_PERSONAL_ID_NOT_UNIQUE, "Cannot create account");
+    }
+
+    private boolean verifyBeforeChangingUser(String pid) {
+        return usersRepository.all().noneMatch(user -> user.getPersonalIdentificationNumber().equals(pid));
     }
 
     private User checkIfUserExist(String userId) throws UseException {

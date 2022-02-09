@@ -24,13 +24,11 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public Account createAccount(String userId, String accountName) throws UseException {
         verifyBeforeCreatingAccount(userId, accountName);
-        //return accountsRepository.save(factory.createAccountObject(usersRepository.getEntityById(userId).get(), accountName, userId, true)); // Factory pattern
-        return accountsRepository.save(factory.createAccountObject(getUser(userId), accountName, userId, true)); // Factory pattern
+        return accountsRepository.save(factory.createAccountObject(userId, getUser(userId), accountName, true)); // Factory pattern
     }
 
     @Override
     public Account changeAccount(String userId, String accountId, Consumer<ChangeAccount> changeAccountConsumer) throws UseException {
-        //Account account = accountsRepository.getEntityById(accountId).get();
         Account account = getAccount(accountId);
         verifyBeforeChanging(userId, account);
         changeAccountConsumer.accept(name -> {
@@ -46,8 +44,6 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Account addUserToAccount(String userId, String accountId, String userIdToBeAssigned) throws UseException {
-        //User newUser = usersRepository.getEntityById(userIdToBeAssigned).get();
-        //Account account = accountsRepository.getEntityById(accountId).get();
         verifyAccountExist(accountId);
         Account account = getAccount(accountId);
         verifyBeforeAdding(userId, userIdToBeAssigned, account);
@@ -59,8 +55,6 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Account removeUserFromAccount(String userId, String accountId, String userIdToBeAssigned) throws UseException {
-        //Account account = accountsRepository.getEntityById(accountId).get();
-        //User currentUser = usersRepository.getEntityById(userIdToBeAssigned).get();
         Account account = getAccount(accountId);
         verifyBeforeRemoving(userId, userIdToBeAssigned, account);
         User currentUser = getUser(userIdToBeAssigned);
@@ -71,8 +65,6 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public Account inactivateAccount(String userId, String accountId) throws UseException {
         verifyAccountAndUserEmpty(userId, accountId);
-        //Account account = accountsRepository.getEntityById(accountId).get();
-        //verifyBeforeInactivate(userId, account);
         Account account = getAccount(accountId);
         verifyBeforeInactivating(userId, account);
         account.setActive(false);
@@ -104,7 +96,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     private void verifyAccountExist(String accountId) throws UseException {
-        if (accountsRepository.getEntityById(accountId).isEmpty())
+        if (accountsRepository.all().noneMatch(account -> account.getId().equals(accountId)))
             throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_FOUND, "Account does not exist");
     }
 
@@ -161,7 +153,7 @@ public class AccountServiceImpl implements AccountService {
             throw new UseException(Activity.valueOf(activity.name()), UseExceptionType.valueOf(type.name()), "Account is not active");
     }
 
-    private void checkOwnerIsNotUser(String userIdToBeAssigned, Account account) throws UseException {
+    public void checkOwnerIsNotUser(String userIdToBeAssigned, Account account) throws UseException {
         if (account.getOwner().getId().equals(userIdToBeAssigned))
             throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.CANNOT_ADD_OWNER_AS_USER, "Cannot add owner as user");
     }
