@@ -164,6 +164,4 @@ public class TransactionServiceTest {
         when(usersRepository.getEntityById(eq(userId))).thenReturn(Optional.of(user));
         return user;
     }
-
-
 }

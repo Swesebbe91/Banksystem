@@ -15,10 +15,12 @@ public class AccountServiceImpl implements AccountService {
     final UsersRepository usersRepository;
     AccountsRepository accountsRepository;
     Factory factory = new Factory();
+    AccountCheckHelper accountCheckHelper;
 
-    public AccountServiceImpl(UsersRepository usersRepository, AccountsRepository accountsRepository) {
+    public AccountServiceImpl(UsersRepository usersRepository, AccountsRepository accountsRepository, AccountCheckHelper accountCheckHelper) {
         this.usersRepository = usersRepository;
         this.accountsRepository = accountsRepository;
+        this.accountCheckHelper = accountCheckHelper;
     }
 
     @Override
@@ -101,39 +103,39 @@ public class AccountServiceImpl implements AccountService {
     }
 
     private void verifyAccountAndUserEmpty(String userId, String accountId) throws UseException {
-        checkIfAccountFoundToInactivateAccount(accountId);
-        checkIfUserFoundToInactivateAccount(userId);
+        accountCheckHelper.checkIfAccountFoundToInactivateAccount(accountId);
+        accountCheckHelper.checkIfUserFoundToInactivateAccount(userId);
     }
 
     private void verifyBeforeCreatingAccount(String userId, String accountName) throws UseException {
-        checkIfUserFound(userId);
-        checkIfAccountNameUnique(accountName);
+        accountCheckHelper.checkIfUserFound(userId);
+        accountCheckHelper.checkIfAccountNameUnique(accountName);
     }
 
     private void verifyBeforeChanging(String userId, Account account) throws UseException {
-        checkIfAccountOwner(account, userId, Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_OWNER);
-        checkIfAccountIsActive(account, Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_ACTIVE);
+        accountCheckHelper.checkIfAccountOwner(account, userId, Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_OWNER);
+        accountCheckHelper.checkIfAccountIsActive(account, Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_ACTIVE);
     }
 
     private void verifyBeforeAdding(String userId, String userIdToBeAssigned, Account account) throws UseException {
-        checkIfAccountOwner(account, userId, Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_OWNER);
-        checkIfAccountIsActive(account, Activity.UPDATE_ACCOUNT, UseExceptionType.ACCOUNT_NOT_ACTIVE);
-        checkOwnerIsNotUser(userIdToBeAssigned, account);
-        checkIfAlreadyAssigned(account, userIdToBeAssigned, Activity.UPDATE_ACCOUNT, UseExceptionType.USER_ALREADY_ASSIGNED_TO_THIS_ACCOUNT);
+        accountCheckHelper.checkIfAccountOwner(account, userId, Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_OWNER);
+        accountCheckHelper.checkIfAccountIsActive(account, Activity.UPDATE_ACCOUNT, UseExceptionType.ACCOUNT_NOT_ACTIVE);
+        accountCheckHelper.checkOwnerIsNotUser(userIdToBeAssigned, account);
+        accountCheckHelper.checkIfAlreadyAssigned(account, userIdToBeAssigned, Activity.UPDATE_ACCOUNT, UseExceptionType.USER_ALREADY_ASSIGNED_TO_THIS_ACCOUNT);
     }
 
     private void verifyBeforeRemoving(String userId, String userIdToBeAssigned, Account account) throws UseException {
-        checkIfAccountOwner(account, userId, Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_OWNER);
-        checkIfNotAssignedToAccount(account, userIdToBeAssigned, Activity.UPDATE_ACCOUNT, UseExceptionType.USER_NOT_ASSIGNED_TO_THIS_ACCOUNT);
+        accountCheckHelper.checkIfAccountOwner(account, userId, Activity.UPDATE_ACCOUNT, UseExceptionType.NOT_OWNER);
+        accountCheckHelper.checkIfNotAssignedToAccount(account, userIdToBeAssigned, Activity.UPDATE_ACCOUNT, UseExceptionType.USER_NOT_ASSIGNED_TO_THIS_ACCOUNT);
     }
 
     private void verifyBeforeInactivating(String userId, Account account) throws UseException {
-        checkIfAccountOwner(account, userId, Activity.INACTIVATE_ACCOUNT, UseExceptionType.NOT_OWNER);
-        checkIfAccountIsActive(account, Activity.INACTIVATE_ACCOUNT, UseExceptionType.NOT_ACTIVE);
+        accountCheckHelper.checkIfAccountOwner(account, userId, Activity.INACTIVATE_ACCOUNT, UseExceptionType.NOT_OWNER);
+        accountCheckHelper.checkIfAccountIsActive(account, Activity.INACTIVATE_ACCOUNT, UseExceptionType.NOT_ACTIVE);
     }
 
-    /**************** CHECKS ******************/
-    private void checkIfAccountOwner(Account account, String userId, Activity activity, UseExceptionType type) throws UseException {
+    /**************** CHECKS ******************//*
+    static private void checkIfAccountOwner(Account account, String userId, Activity activity, UseExceptionType type) throws UseException {
         if (!account.getOwner().getId().equals(userId))
             throw new UseException(Activity.valueOf(activity.name()), UseExceptionType.valueOf(type.name()), "Person is not owner of account");
     }
@@ -153,7 +155,7 @@ public class AccountServiceImpl implements AccountService {
             throw new UseException(Activity.valueOf(activity.name()), UseExceptionType.valueOf(type.name()), "Account is not active");
     }
 
-    public void checkOwnerIsNotUser(String userIdToBeAssigned, Account account) throws UseException {
+    private void checkOwnerIsNotUser(String userIdToBeAssigned, Account account) throws UseException {
         if (account.getOwner().getId().equals(userIdToBeAssigned))
             throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.CANNOT_ADD_OWNER_AS_USER, "Cannot add owner as user");
     }
@@ -177,7 +179,7 @@ public class AccountServiceImpl implements AccountService {
         if (usersRepository.getEntityById(userId).isEmpty())
             throw new UseException(Activity.INACTIVATE_ACCOUNT, UseExceptionType.USER_NOT_FOUND, "User not found");
     }
-
+*/
     /**************** FETCH STREAMS *****************/
     private Stream<Account> getStreamBasedOnAccountName(Stream<Account> accountStream) {
         return accountStream.sorted(Comparator.comparing(Account::getName));

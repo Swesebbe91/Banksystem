@@ -89,11 +89,10 @@ public class UserServiceImpl implements UserService {
     }
 
     private Stream<User> getUserStreamBasedOnValue(SortOrder sortOrder, Stream<User> streamOfUsers) {
-        switch (sortOrder) {
-            case Name -> streamOfUsers = streamOfUsers.sorted(Comparator.comparing(User::getName));
-            case PersonalId -> streamOfUsers = streamOfUsers.sorted(Comparator.comparing(User::getPersonalIdentificationNumber));
-            default -> streamOfUsers = streamOfUsers.filter(User::isActive);
-        }
-        return streamOfUsers;
+        return switch (sortOrder) {
+            case Name -> streamOfUsers.sorted(Comparator.comparing(User::getName));
+            case PersonalId -> streamOfUsers.sorted(Comparator.comparing(User::getPersonalIdentificationNumber));
+            default -> streamOfUsers.filter(User::isActive);
+        };
     }
 }

@@ -43,7 +43,6 @@ public class TransactionImpl implements Transaction {
         }
         return date;
     }
-    
 
     @Override
     public User getUser() {

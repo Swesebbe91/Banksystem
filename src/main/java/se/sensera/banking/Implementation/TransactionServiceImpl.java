@@ -1,14 +1,9 @@
 package se.sensera.banking.Implementation;
 
 import se.sensera.banking.*;
-import se.sensera.banking.exceptions.Activity;
 import se.sensera.banking.exceptions.UseException;
-import se.sensera.banking.exceptions.UseExceptionType;
-
-import java.util.List;
+import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
-
 
 public class TransactionServiceImpl implements TransactionService {
 
@@ -16,8 +11,6 @@ public class TransactionServiceImpl implements TransactionService {
     AccountsRepository accountsRepository;
     TransactionsRepository transactionsRepository;
     Factory factory = new Factory();
-    UserServiceImpl userService;
-    AccountServiceImpl accountService;
 
     public TransactionServiceImpl(UsersRepository usersRepository, AccountsRepository accountsRepository, TransactionsRepository transactionsRepository) {
         this.usersRepository = usersRepository;
@@ -27,11 +20,20 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public Transaction createTransaction(String timeStamp, String userId, String accountId, double amount) throws UseException {
+
         Account account = getAccount(accountId);
-        if (!account.getUsers().anyMatch(x -> x.getId().equals(userId)) && !account.getOwner().getId().equals(userId)) {
-            throw new UseException(Activity.CREATE_TRANSACTION, UseExceptionType.NOT_ALLOWED);
+        User user = getUser(userId);
+        return transactionsRepository.save(factory.createTransactionObject(UUID.randomUUID().toString(), timeStamp, user, account, amount));
+        /*if (!account.getUsers().anyMatch(x -> x.getId().equals(userId)) || !account.getOwner().getId().equals(userId)) { //TEST 2 && TEST 3
+                throw new UseException(Activity.CREATE_TRANSACTION, UseExceptionType.NOT_ALLOWED);
         }
-        return transactionsRepository.save(factory.createTransactionObject(userId, timeStamp, usersRepository.getEntityById(userId).get(), accountsRepository.getEntityById(accountId).get(), amount));
+
+         /*Transaction oldTrans = transactionsRepository.all().filter(x -> x.getAccount().equals(accountId)).findFirst().get();
+             if (oldTrans.getAmount() < amount) {
+            throw new UseException(Activity.CREATE_TRANSACTION, UseExceptionType.NOT_FUNDED);
+        }
+        */
+
     }
 
     @Override
@@ -46,6 +48,10 @@ public class TransactionServiceImpl implements TransactionService {
 
     public Account getAccount(String accountId) {
         return accountsRepository.getEntityById(accountId).get();
+    }
+
+    public User getUser(String userId) {
+        return usersRepository.getEntityById(userId).get();
     }
 }
 
