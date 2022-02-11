@@ -1,14 +1,9 @@
 package se.sensera.banking.Implementation;
 
 import se.sensera.banking.*;
-
-import javax.swing.text.DateFormatter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
 import java.util.Date;
-import java.util.Formatter;
 import java.util.Locale;
 
 public class TransactionImpl implements Transaction {

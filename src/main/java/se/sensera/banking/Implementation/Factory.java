@@ -4,9 +4,6 @@ import se.sensera.banking.Account;
 import se.sensera.banking.Transaction;
 import se.sensera.banking.User;
 
-import java.util.ArrayList;
-import java.util.Date;
-
 public class Factory {
 
      public User createUserObject(String id, String name, String personalIdentificationNumber, boolean active) {

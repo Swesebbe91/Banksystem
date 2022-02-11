@@ -86,7 +86,6 @@ public class AccountServiceImpl implements AccountService {
     public Account getAccount(String accountId) {
         return accountsRepository.getEntityById(accountId).get();
     }
-
     public User getUser(String userId) {
         return usersRepository.getEntityById(userId).get();
     }
@@ -134,52 +133,6 @@ public class AccountServiceImpl implements AccountService {
         accountCheckHelper.checkIfAccountIsActive(account, Activity.INACTIVATE_ACCOUNT, UseExceptionType.NOT_ACTIVE);
     }
 
-    /**************** CHECKS ******************//*
-    static private void checkIfAccountOwner(Account account, String userId, Activity activity, UseExceptionType type) throws UseException {
-        if (!account.getOwner().getId().equals(userId))
-            throw new UseException(Activity.valueOf(activity.name()), UseExceptionType.valueOf(type.name()), "Person is not owner of account");
-    }
-
-    private void checkIfUserFound(String userId) throws UseException {
-        if (usersRepository.getEntityById(userId).isEmpty())
-            throw new UseException(Activity.CREATE_ACCOUNT, UseExceptionType.USER_NOT_FOUND, "User not found");
-    }
-
-    private void checkIfAccountNameUnique(String accountName) throws UseException {
-        if (accountsRepository.all().anyMatch(x -> x.getName().equals(accountName)))
-            throw new UseException(Activity.CREATE_ACCOUNT, UseExceptionType.ACCOUNT_NAME_NOT_UNIQUE, "Not unique account name");
-    }
-
-    private void checkIfAccountIsActive(Account account, Activity activity, UseExceptionType type) throws UseException {
-        if (!account.isActive())
-            throw new UseException(Activity.valueOf(activity.name()), UseExceptionType.valueOf(type.name()), "Account is not active");
-    }
-
-    private void checkOwnerIsNotUser(String userIdToBeAssigned, Account account) throws UseException {
-        if (account.getOwner().getId().equals(userIdToBeAssigned))
-            throw new UseException(Activity.UPDATE_ACCOUNT, UseExceptionType.CANNOT_ADD_OWNER_AS_USER, "Cannot add owner as user");
-    }
-
-    private void checkIfAlreadyAssigned(Account account, String userIdToBeAssigned, Activity activity, UseExceptionType type) throws UseException {
-        if (account.getUsers().anyMatch(x -> x.getId().equals(userIdToBeAssigned)))
-            throw new UseException(Activity.valueOf(activity.name()), UseExceptionType.valueOf(type.name()), "User is already assigned to account");
-    }
-
-    private void checkIfNotAssignedToAccount(Account account, String userIdToBeAssigned, Activity activity, UseExceptionType type) throws UseException {
-        if (account.getUsers().noneMatch(x -> x.getId().equals(userIdToBeAssigned)))
-            throw new UseException(Activity.valueOf(activity.name()), UseExceptionType.valueOf(type.name()), "Person has no authorized access to account");
-    }
-
-    private void checkIfAccountFoundToInactivateAccount(String accountId) throws UseException {
-        if (accountsRepository.getEntityById(accountId).isEmpty())
-            throw new UseException(Activity.INACTIVATE_ACCOUNT, UseExceptionType.NOT_FOUND, "Account not found");
-    }
-
-    private void checkIfUserFoundToInactivateAccount(String userId) throws UseException {
-        if (usersRepository.getEntityById(userId).isEmpty())
-            throw new UseException(Activity.INACTIVATE_ACCOUNT, UseExceptionType.USER_NOT_FOUND, "User not found");
-    }
-*/
     /**************** FETCH STREAMS *****************/
     private Stream<Account> getStreamBasedOnAccountName(Stream<Account> accountStream) {
         return accountStream.sorted(Comparator.comparing(Account::getName));
